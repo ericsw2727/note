@@ -14,8 +14,8 @@ from datetime import datetime
 
 from PySide6.QtCore import QPoint, QPointF, QRect, QRectF, QSettings, QSize, QStandardPaths, Qt, QTimer
 from PySide6.QtGui import (QColor, QConicalGradient, QFont, QFontMetricsF, QGuiApplication, QImage, QKeySequence,
-                           QLinearGradient, QPainter, QPainterPath, QPen, QPixmap, QShortcut, QTextCursor)
-from PySide6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel, QLineEdit, QMenu,
+                           QIcon, QLinearGradient, QPainter, QPainterPath, QPen, QPixmap, QShortcut, QTextCursor)
+from PySide6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel, QLineEdit, QMenu, QMessageBox,
                                QPushButton, QSlider, QTextEdit, QToolButton, QVBoxLayout, QWidget, QWidgetAction)
 
 from net import DRAW_TYPES, IP_RE, PORT, RELAY_URL, Net, UPnP, is_private, local_ip
@@ -81,6 +81,31 @@ class TextItem:
     def __init__(self, x=0, y=0, txt="", c=None, z=40):
         self.x, self.y, self.txt, self.c, self.z = x, y, txt, c or INK, z
         self.hidden = False
+
+
+def exit_icon(color, size=32):
+    """방 나가기 아이콘: 열린 문과 바깥으로 나가는 화살표."""
+    pm = QPixmap(size, size)
+    pm.fill(Qt.transparent)
+    p = QPainter(pm)
+    p.setRenderHint(QPainter.Antialiasing)
+    p.scale(size / 24, size / 24)
+    pen = QPen(QColor(color), 2.2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+    p.setPen(pen)
+    door = QPainterPath()
+    door.moveTo(14, 5)
+    door.lineTo(6, 5)
+    door.lineTo(6, 19)
+    door.lineTo(14, 19)
+    p.drawPath(door)
+    p.drawLine(QPointF(10, 12), QPointF(20, 12))
+    arrow = QPainterPath()
+    arrow.moveTo(16.5, 8.5)
+    arrow.lineTo(20, 12)
+    arrow.lineTo(16.5, 15.5)
+    p.drawPath(arrow)
+    p.end()
+    return QIcon(pm)
 
 
 def text_font(px):
@@ -451,6 +476,17 @@ class Canvas(QWidget):
                 self.undo_stack.setdefault(self.current, []).append(sid)
                 self._send({"t": "redo", "pg": self.current, "s": sid})
                 return
+
+    def reset(self):
+        """방을 나갈 때: 모든 메모장과 되돌리기 기록을 비우고 빈 종이 한 장으로."""
+        self._drop_editor()
+        self.drag = None
+        self.pages = {"main": {}}
+        self.order = ["main"]
+        self.current = "main"
+        self.undo_stack, self.redo_stack = {}, {}
+        self.last = None
+        self.rerender()
 
     # ── 메모장 ──
     def clear_page(self):
@@ -1106,7 +1142,13 @@ class Easel(QWidget):
         self.act_host.setText("방 만들기")
         self.act_host.setToolTip("방 만들기 · 내가 방장이 돼요")
         self.act_host.clicked.connect(self.start_host)
-        for b in (self.act_join, self.act_host):
+        # 방 안에서는 같은 자리에 '방 나가기' (처음 화면으로 돌아가 다른 방에 들어갈 수 있게)
+        self.act_leave = QToolButton(self)
+        self.act_leave.setText("방 나가기")
+        self.act_leave.setToolTip("방 나가기 · 처음 화면으로 돌아가요")
+        self.act_leave.clicked.connect(lambda: self.leave_room())
+        self.act_leave.hide()
+        for b in (self.act_join, self.act_host, self.act_leave):
             b.setObjectName("act")
             b.setCursor(Qt.PointingHandCursor)
 
@@ -1192,7 +1234,15 @@ class Easel(QWidget):
             b.setFont(act_font)
             b.setGeometry(x, act.center().y() - h // 2, w, h)
             x += w + n(6)
-        if self.act_join.isVisibleTo(self) and act.top() < st.bottom() and act.x() > st.x():
+        lw = round(fm.horizontalAdvance(self.act_leave.text()) + n(14))
+        leave_icon = lw > act.width() - n(8)
+        self.act_leave.setToolButtonStyle(Qt.ToolButtonIconOnly if leave_icon else Qt.ToolButtonTextOnly)
+        self.act_leave.setIcon(exit_icon(skin_color("ink")))
+        self.act_leave.setIconSize(QSize(round(h * 0.7), round(h * 0.7)))
+        self.act_leave.setFont(act_font)
+        self.act_leave.setGeometry(act.x() + n(4), act.center().y() - h // 2, h if leave_icon else lw, h)
+        shown = self.act_join.isVisibleTo(self) or self.act_leave.isVisibleTo(self)
+        if shown and act.top() < st.bottom() and act.x() > st.x():
             text_w = min(text_w, act.x() - st.x() - n(28))     # 같은 줄이면 상태 글자가 버튼 앞에서 끝나게
         self.status_text.setGeometry(st.x() + n(26), cy - n(10), text_w, n(20))
         self.set_status(self.status_kind, self.status_text.text())
@@ -1560,6 +1610,8 @@ class Easel(QWidget):
                 m.addAction(icon("copy", 14), "방 이름 복사", lambda: self._copy(self.room_name))
         else:
             m.addAction("아직 방에 들어가지 않았어요").setEnabled(False)
+        if self.net:
+            m.addAction(exit_icon(INK, 14), "방 나가기 (처음 화면으로)", lambda: self.leave_room())
         m.addSeparator()
         skins = m.addMenu("메모장 모양 (스킨)")
         for sid in SKIN_ORDER:
@@ -1621,7 +1673,10 @@ class Easel(QWidget):
             public = ext if ext and not is_private(ext) else None
             addrs = [f"{self.lan}:{PORT}"] + ([f"{public}:{PORT}"] if public else [])
             net.set_direct(addrs)
-            self.ui_jobs.put(lambda: self._host_ready(code, public))
+            if not net.running:          # 준비하는 사이에 방을 나갔다
+                self.upnp.close()
+                return
+            self.ui_jobs.put(lambda: self._host_ready(code, public) if self.net is net else None)
 
         threading.Thread(target=setup, daemon=True).start()
 
@@ -1640,10 +1695,50 @@ class Easel(QWidget):
     def _enter_board(self):
         self.lobby.hide()
         self.pill.show()
-        self.act_join.hide()             # 방에 들어가면 위쪽 방 버튼은 숨긴다
+        self.act_join.hide()             # 방에 들어가면 위쪽 방 버튼 대신 '방 나가기'
         self.act_host.hide()
+        self.act_leave.show()
         self._layout()
         self.refresh_tools()
+
+    def leave_room(self, confirm=True):
+        """방을 나가 처음 화면(방 만들기 / 방 들어가기)으로 돌아간다."""
+        if not self.net:
+            return
+        if confirm:
+            if self.net.is_host and self.count > 1:
+                text = "방을 닫을까요?\n친구들도 연결이 끊기고, 이 방의 그림은 사라져요."
+            elif self.net.is_host:
+                text = "방을 닫을까요?\n이 방의 그림은 사라져요."
+            else:
+                text = "방에서 나갈까요?\n그림은 방에 남아 있어서 다시 들어오면 볼 수 있어요."
+            box = QMessageBox(QMessageBox.Question, "방 나가기", text, parent=self)
+            box.addButton("나가기", QMessageBox.AcceptRole)
+            stay = box.addButton("취소", QMessageBox.RejectRole)
+            box.setDefaultButton(stay)
+            box.exec()
+            if box.clickedButton() is stay:
+                return
+        self.canvas.finish_edit()
+        net, was_host = self.net, self.net.is_host
+        self.net = None
+        net.close()
+        if was_host:
+            threading.Thread(target=self.upnp.close, daemon=True).start()   # 공유기 포트도 닫는다
+        self.code = self.public = self.lan = self.mode = self.room_name = None
+        self.count, self.count_seen = 1, False
+        self.canvas.reset()
+        self.toast.hide()
+        self.pill.hide()
+        self.lobby.busy(False)
+        self.lobby.say("방에서 나왔어요. 새 방을 만들거나 다른 방에 들어가세요.")
+        self.lobby.show()
+        self.act_leave.hide()
+        for b in (self.act_join, self.act_host):
+            b.setEnabled(True)
+            b.show()
+        self.set_status("offline", "연결 안 됨")
+        self._layout()
 
     def open_join(self):
         """위쪽 '방 들어가기': 방 코드나 주소를 넣는 작은 입력칸을 버튼 아래에 띄운다."""
@@ -1760,7 +1855,7 @@ class Easel(QWidget):
                 self.count_seen = True
             elif t == "disconnected":
                 self.set_status("error", "연결 끊김")
-                self.toast.show_text("방장과 연결이 끊겼어요. 다시 실행해서 참가하세요.", 60000)
+                self.toast.show_text("방장과 연결이 끊겼어요. 위의 '방 나가기'를 누르고 다시 들어가세요.", 60000)
             elif t == "relaylost":
                 self.toast.show_text("중계 서버와 연결이 끊겼어요. 방 코드로 들어온 친구들은 나가졌어요.", 15000)
 
