@@ -3,15 +3,14 @@
 이 폴더(`relay`)를 인터넷에 올리면 exe에서 **방 코드**로 어디서든 접속할 수 있어요.
 서버는 아무것도 저장하지 않고, 방이 열려 있는 동안만 메시지를 전달해요.
 
-## 1. GitHub에 올리기
-1. GitHub에 새 저장소를 만들어요(예: `doodle-relay`). Private이어도 돼요.
-2. 이 `relay` 폴더 안의 `server.py`, `requirements.txt`를 저장소에 올려요.
-   웹에서 **Add file → Upload files**로 끌어다 놓으면 돼요.
+## 1. GitHub
+이미 올라가 있는 `ericsw2727/note` 저장소를 그대로 써요. 따로 저장소를 만들 필요 없어요.
 
 ## 2. Render에 배포하기
 1. https://render.com 에 GitHub 계정으로 가입해요.
-2. **New → Web Service**를 누르고 방금 만든 저장소를 선택해요.
+2. **New → Web Service**를 누르고 `note` 저장소를 선택해요.
 3. 설정:
+   - Root Directory: **`relay`** (이 폴더만 서버로 올라가요)
    - Runtime: **Python 3**
    - Build Command: `pip install -r requirements.txt`
    - Start Command: `python server.py`

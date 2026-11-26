@@ -17,7 +17,7 @@ from websockets.sync.client import connect as ws_connect
 
 # 중계 서버 주소. relay/README.md 대로 서버를 올린 뒤 여기에 넣고 exe를 다시 빌드한다.
 # 예: "wss://doodle-relay.onrender.com"   (비워 두면 방 코드 기능 없이 IP로만 연결)
-RELAY_URL = os.environ.get("DOODLE_RELAY", "")
+RELAY_URL = os.environ.get("DOODLE_RELAY", "wss://note-zfa0.onrender.com")
 
 PORT = 50505
 # 그림에 관한 메시지. 방장은 이걸 기록해 두었다가 늦게 들어온 사람에게 순서대로 보낸다.
