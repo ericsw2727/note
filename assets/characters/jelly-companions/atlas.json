@@ -1,0 +1,164 @@
+{
+  "count": 12,
+  "images": {
+    "jelly-01-04.png": [
+      1254,
+      1254
+    ],
+    "jelly-05-08.png": [
+      1254,
+      1254
+    ],
+    "jelly-09-12.png": [
+      1261,
+      1247
+    ]
+  },
+  "suggestedDisplaySize": 96,
+  "frames": [
+    {
+      "id": "bunny",
+      "name": "토끼",
+      "image": "jelly-01-04.png",
+      "rect": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "animated": false
+    },
+    {
+      "id": "bear",
+      "name": "곰",
+      "image": "jelly-01-04.png",
+      "rect": [
+        627,
+        0,
+        627,
+        627
+      ],
+      "animated": false
+    },
+    {
+      "id": "cat",
+      "name": "고양이",
+      "image": "jelly-01-04.png",
+      "rect": [
+        0,
+        627,
+        627,
+        627
+      ],
+      "animated": false
+    },
+    {
+      "id": "seal",
+      "name": "물범",
+      "image": "jelly-01-04.png",
+      "rect": [
+        627,
+        627,
+        627,
+        627
+      ],
+      "animated": false
+    },
+    {
+      "id": "octopus",
+      "name": "문어",
+      "image": "jelly-05-08.png",
+      "rect": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "animated": false
+    },
+    {
+      "id": "whale",
+      "name": "고래",
+      "image": "jelly-05-08.png",
+      "rect": [
+        627,
+        0,
+        627,
+        627
+      ],
+      "animated": false
+    },
+    {
+      "id": "fox",
+      "name": "여우",
+      "image": "jelly-05-08.png",
+      "rect": [
+        0,
+        627,
+        627,
+        627
+      ],
+      "animated": false
+    },
+    {
+      "id": "penguin",
+      "name": "펭귄",
+      "image": "jelly-05-08.png",
+      "rect": [
+        627,
+        627,
+        627,
+        627
+      ],
+      "animated": false
+    },
+    {
+      "id": "ghost",
+      "name": "유령",
+      "image": "jelly-09-12.png",
+      "rect": [
+        0,
+        0,
+        630,
+        623
+      ],
+      "animated": false
+    },
+    {
+      "id": "cloud",
+      "name": "구름",
+      "image": "jelly-09-12.png",
+      "rect": [
+        630,
+        0,
+        631,
+        623
+      ],
+      "animated": false
+    },
+    {
+      "id": "star",
+      "name": "별",
+      "image": "jelly-09-12.png",
+      "rect": [
+        0,
+        623,
+        630,
+        624
+      ],
+      "animated": false
+    },
+    {
+      "id": "mushroom",
+      "name": "버섯",
+      "image": "jelly-09-12.png",
+      "rect": [
+        630,
+        623,
+        631,
+        624
+      ],
+      "animated": false
+    }
+  ]
+}

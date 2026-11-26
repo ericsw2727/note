@@ -6,16 +6,21 @@
 3. 잠깐 반응   → 인사(greeting)·연필(pencil)·기쁨(happy)·올려다보기(alert)
 4. 사용자가 멈춤 → 엎드려 쉬기(rest)
 5. 평소        → 걷다가 쉬다가 (걷기 4프레임, 쉴 때는 idle·happy·rest 중 하나)
+
+푸들 대신 젤 캐릭터 12종(산책 친구) 중 하나로 바꿀 수 있다 (pet/char). 젤 캐릭터는 움직임 4프레임과
+기본 자세 하나뿐이라, 다른 자세는 기본 자세에 효과를 더해 보여준다: 반응은 통통 뛰기, 연결 끊김은 갸웃 기울기,
+잠자기는 Zz. 고래·유령·구름·별은 바닥에서 조금 떠서 둥둥 떠다닌다.
 """
 
 import ctypes
 import json
+import math
 import random
 import sys
 import time
 
-from PySide6.QtCore import QPoint, QRectF, Qt, QTimer
-from PySide6.QtGui import QAction, QColor, QFont, QFontMetrics, QGuiApplication, QPainter, QPixmap, QTransform
+from PySide6.QtCore import QPoint, QPointF, QRectF, Qt, QTimer
+from PySide6.QtGui import QAction, QColor, QFont, QFontMetrics, QGuiApplication, QIcon, QPainter, QPixmap, QTransform
 from PySide6.QtWidgets import QMenu, QWidget
 
 from resources import FONT, INK, RES, icon, style_menu, svg_pixmap
@@ -29,6 +34,25 @@ TICK_MS = 33
 DRAW_NOTE_EVERY = 20     # 친구가 계속 그리면 이 초마다 다시 알려준다
 DRAW_LINES = ["친구가 뭔가 그렸어요!", "멍! 친구가 낙서했어요", "친구가 그림을 그리고 있어요!"]
 WRITE_LINES = ["친구가 뭔가 적었어요!", "멍! 친구가 메모를 남겼어요"]
+
+
+HOP_POSES = ("greeting", "happy", "alert", "pencil")     # 젤 캐릭터는 이 반응 때 통통 뛴다
+
+_jelly_file = RES / "pets" / "pets.json"
+_jelly = json.loads(_jelly_file.read_text(encoding="utf-8")) if _jelly_file.exists() else {"dpr": 2, "characters": []}
+JELLY = {c["id"]: c for c in _jelly["characters"]}
+# 산책 친구 목록: 푸들이 첫 번째이자 기본
+CHARACTERS = [{"id": "poodle", "name": "푸들"}] + [{"id": c["id"], "name": c["name"]} for c in _jelly["characters"]]
+
+
+def character_pixmap(cid):
+    """고르기 버튼에 쓰는 캐릭터 기본 자세 그림."""
+    path = RES / "pets" / cid / "idle.png" if cid in JELLY else RES / "pet" / "idle.png"
+    return QPixmap(str(path))
+
+
+def character_name(cid):
+    return next((c["name"] for c in CHARACTERS if c["id"] == cid), "푸들")
 
 
 class _LastInput(ctypes.Structure):
@@ -58,15 +82,9 @@ class Pet(QWidget):
         self.on_expand, self.on_quit = on_expand, on_quit
         self.on_memo = None                      # 낙서장이 '내 메모 열기'를 넣어 준다
 
-        meta = json.loads((RES / "pet" / "pet.json").read_text(encoding="utf-8"))
-        self.frames, self.mirrored = {}, {}
-        for name, info in meta["frames"].items():
-            px = QPixmap(str(RES / "pet" / info["file"]))
-            px.setDevicePixelRatio(meta["dpr"])
-            self.frames[name] = px
-            m = px.transformed(QTransform().scale(-1, 1), Qt.SmoothTransformation)
-            m.setDevicePixelRatio(meta["dpr"])
-            self.mirrored[name] = m
+        self.settings = settings      # 걷기 멈춤·이동 범위·캐릭터를 다음 실행에도 기억
+        self.char, self.kind = "poodle", None
+        self.set_character(str(settings.value("pet/char", "poodle")) if settings else "poodle", save=False)
         self.bubble_svg = RES / "ui" / "bubble.svg"
         self.font_ = QFont(FONT, 9, QFont.Bold)
 
@@ -82,7 +100,6 @@ class Pet(QWidget):
         self.reaction = None          # (pose, 끝나는 시각)
         self.bubble = None            # (문구, 끝나는 시각 또는 None=계속)
         self.away = False
-        self.settings = settings      # 걷기 멈춤·이동 범위를 다음 실행에도 기억
         self.stopped = bool(settings.value("pet/stopped", False, type=bool)) if settings else False
         self.drag_from = None
         self.dragging = False
@@ -98,6 +115,33 @@ class Pet(QWidget):
                                   timeout=self._single_click)
         self.idle_timer = QTimer(self, interval=2000, timeout=self._check_away)
         self.last_tick = time.monotonic()
+
+    # ───────── 캐릭터 ─────────
+    def set_character(self, cid, save=True):
+        """산책 친구를 바꾼다. poodle 또는 res/pets의 젤 캐릭터 id. 모르는 id면 푸들."""
+        if cid in JELLY:
+            info, folder, dpr = JELLY[cid], RES / "pets" / cid, _jelly["dpr"]
+            frames = info["frames"]
+        else:
+            cid, info, folder = "poodle", None, RES / "pet"
+            meta = json.loads((folder / "pet.json").read_text(encoding="utf-8"))
+            frames, dpr = meta["frames"], meta["dpr"]
+        self.frames, self.mirrored = {}, {}
+        for name, f in frames.items():
+            px = QPixmap(str(folder / f["file"]))
+            px.setDevicePixelRatio(dpr)
+            self.frames[name] = px
+            m = px.transformed(QTransform().scale(-1, 1), Qt.SmoothTransformation)
+            m.setDevicePixelRatio(dpr)
+            self.mirrored[name] = m
+        self.char, self.kind = cid, info
+        if save:
+            self._save("pet/char", cid)
+        self.update()
+
+    def _lines(self, lines):
+        """'멍!'은 푸들만 한다."""
+        return [t for t in lines if self.kind is None or "멍" not in t] or lines
 
     # ───────── 바깥(이젤)에서 부르는 것 ─────────
     def appear(self, near_x, screen=None):
@@ -139,9 +183,9 @@ class Pet(QWidget):
         if now - self.last_draw_note > DRAW_NOTE_EVERY:
             self.last_draw_note = now
             if wrote:
-                text = "자리 비운 사이 친구가 글을 남겼어요!" if self.away else random.choice(WRITE_LINES)
+                text = "자리 비운 사이 친구가 글을 남겼어요!" if self.away else random.choice(self._lines(WRITE_LINES))
             else:
-                text = "자리 비운 사이 친구가 그렸어요!" if self.away else random.choice(DRAW_LINES)
+                text = "자리 비운 사이 친구가 그렸어요!" if self.away else random.choice(self._lines(DRAW_LINES))
             self.react("pencil", 4)
             if self.connection != "lost":
                 self.say(text, None)
@@ -228,13 +272,17 @@ class Pet(QWidget):
                 if (self.dir < 0 and self.cx <= self.target) or (self.dir > 0 and self.cx >= self.target):
                     self._start_pause()
                 self._place()
-                pose = f"walk{int(self.walk_time * WALK_FPS) % 4}"
+                fps = self.kind["fps"] if self.kind else WALK_FPS
+                pose = f"walk{int(self.walk_time * fps) % 4}"
             else:
                 pose = self.pause_pose
             flip = self.dir > 0
         if pose not in ("idle",) and not pose.startswith("walk"):
             flip = False      # 정면 자세는 뒤집지 않는다
-        if (pose, flip) != (self._pose, self._flip) or self.bubble:
+        if self.kind and not self.kind["side"]:
+            flip = False      # 정면을 보는 젤 캐릭터는 늘 그대로
+        # 젤 캐릭터는 뛰기·둥둥·Zz 효과가 계속 움직여서 매번 다시 그린다
+        if (pose, flip) != (self._pose, self._flip) or self.bubble or self.kind:
             self._pose, self._flip = pose, flip
             self.update()
 
@@ -242,17 +290,53 @@ class Pet(QWidget):
     def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform | QPainter.TextAntialiasing)
-        px = (self.mirrored if self._flip else self.frames)[self._pose]
+        pose = self._pose
+        frames = self.mirrored if self._flip else self.frames
+        px = frames.get(pose) or frames["idle"]      # 젤 캐릭터는 걷기·기본 자세만 있다
         w, h = px.width() / px.devicePixelRatio(), px.height() / px.devicePixelRatio()
         mid = self.W / 2
-        if self._pose.startswith("walk"):
-            x = mid + WALK_ANCHOR - w if self._flip else mid - WALK_ANCHOR
+        if self.kind is None:
+            if pose.startswith("walk"):
+                x = mid + WALK_ANCHOR - w if self._flip else mid - WALK_ANCHOR
+            else:
+                x = mid - w / 2
+            top = self.H - h
+            p.drawPixmap(QPoint(round(x), round(top)), px)
         else:
-            x = mid - w / 2
-        top = self.H - h
-        p.drawPixmap(QPoint(round(x), round(top)), px)
+            top = self._draw_jelly(p, px, pose, w, h)
         if self.bubble:
             self._draw_bubble(p, self.bubble[0], top)
+
+    def _draw_jelly(self, p, px, pose, w, h):
+        """젤 캐릭터 그리기. 둥둥 떠 있기, 통통 뛰기, 갸웃 기울기, Zz. 캐릭터 맨 위 y를 돌려준다."""
+        t = time.monotonic()
+        lift = 0.0
+        if self.kind["float"] and pose != "sleep":
+            lift += 5 + self.kind["hop"] * (1 + math.sin(t * 2.4))
+        if pose.startswith("walk") and not self.kind["float"]:
+            lift += self.kind["hop"] * abs(math.sin(self.walk_time * math.pi * self.kind["fps"] / 2))
+        if pose in HOP_POSES:
+            lift += 7 * abs(math.sin(t * math.pi * 2.4))
+        top = self.H - h - lift
+        p.save()
+        p.translate(self.W / 2, self.H - lift)                 # 발밑 가운데를 기준으로
+        if pose == "tilt":
+            p.rotate(-12)
+        elif pose in ("sleep", "rest"):
+            p.scale(1.04, 0.94)                                  # 살짝 눌려서 쉬는 느낌
+        if pose == "sleep":
+            p.setOpacity(0.85)
+        p.drawPixmap(QPointF(-w / 2, -h), px)
+        p.restore()
+        if pose == "sleep":
+            p.setPen(QColor(INK))
+            for i, (dx, size) in enumerate(((w * 0.38, 9), (w * 0.38 + 10, 12))):
+                phase = (t * 0.8 + i * 0.5) % 1.0
+                p.setOpacity(1 - phase)
+                p.setFont(QFont(FONT, size, QFont.Bold))
+                p.drawText(QPointF(self.W / 2 + dx, top + 6 - i * 10 - phase * 8), "z" if i == 0 else "Z")
+            p.setOpacity(1)
+        return top
 
     def _draw_bubble(self, p, text, pet_top):
         fm = QFontMetrics(self.font_)
@@ -320,6 +404,14 @@ class Pet(QWidget):
             m.addAction(icon("memo", 14), "내 메모", self.on_memo)
         m.addAction(icon("play" if self.stopped else "pause", 14),
                     "다시 걷기" if self.stopped else "걷기 멈추기", self._toggle_stop)
+        sub = style_menu(QMenu("산책 친구 바꾸기", m))
+        sub.setIcon(QIcon(character_pixmap(self.char)))
+        for c in CHARACTERS:
+            a = sub.addAction(QIcon(character_pixmap(c["id"])), c["name"] + (" (기본)" if c["id"] == "poodle" else ""))
+            a.setCheckable(True)
+            a.setChecked(c["id"] == self.char)
+            a.triggered.connect(lambda _=False, cid=c["id"]: self.set_character(cid))
+        m.addMenu(sub)
         m.addSeparator()
         m.addAction(icon("close", 14), "닫기", self.on_quit)
         m.exec(e.globalPos())

@@ -1,0 +1,907 @@
+{
+  "count": 12,
+  "totalFrames": 48,
+  "version": 1,
+  "characters": [
+    {
+      "id": "bunny",
+      "name": "토끼",
+      "motion": "통통 뛰기",
+      "image": "bunny.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "fps": 4,
+      "loop": true,
+      "frames": [
+        {
+          "rect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            48,
+            121,
+            593,
+            531
+          ]
+        },
+        {
+          "rect": [
+            627,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            14,
+            156,
+            581,
+            531
+          ]
+        },
+        {
+          "rect": [
+            0,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            39,
+            44,
+            612,
+            469
+          ]
+        },
+        {
+          "rect": [
+            627,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            16,
+            115,
+            590,
+            528
+          ]
+        }
+      ],
+      "maxVisibleSize": [
+        574,
+        425
+      ],
+      "bob": 8
+    },
+    {
+      "id": "bear",
+      "name": "곰",
+      "motion": "짧은 걸음",
+      "image": "bear.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "fps": 4,
+      "loop": true,
+      "frames": [
+        {
+          "rect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            130,
+            55,
+            522,
+            536
+          ]
+        },
+        {
+          "rect": [
+            627,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            113,
+            63,
+            516,
+            539
+          ]
+        },
+        {
+          "rect": [
+            0,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            136,
+            63,
+            533,
+            538
+          ]
+        },
+        {
+          "rect": [
+            627,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            119,
+            60,
+            524,
+            536
+          ]
+        }
+      ],
+      "maxVisibleSize": [
+        405,
+        481
+      ],
+      "bob": 0
+    },
+    {
+      "id": "cat",
+      "name": "고양이",
+      "motion": "짧은 걸음",
+      "image": "cat.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "fps": 4,
+      "loop": true,
+      "frames": [
+        {
+          "rect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            104,
+            64,
+            587,
+            554
+          ]
+        },
+        {
+          "rect": [
+            627,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            90,
+            56,
+            577,
+            552
+          ]
+        },
+        {
+          "rect": [
+            0,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            104,
+            60,
+            599,
+            549
+          ]
+        },
+        {
+          "rect": [
+            627,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            94,
+            52,
+            574,
+            537
+          ]
+        }
+      ],
+      "maxVisibleSize": [
+        495,
+        496
+      ],
+      "bob": 0
+    },
+    {
+      "id": "seal",
+      "name": "물범",
+      "motion": "몸을 눌러 이동",
+      "image": "seal.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "fps": 4,
+      "loop": true,
+      "frames": [
+        {
+          "rect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            97,
+            155,
+            575,
+            488
+          ]
+        },
+        {
+          "rect": [
+            627,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            46,
+            183,
+            564,
+            489
+          ]
+        },
+        {
+          "rect": [
+            0,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            79,
+            141,
+            576,
+            456
+          ]
+        },
+        {
+          "rect": [
+            627,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            66,
+            153,
+            563,
+            473
+          ]
+        }
+      ],
+      "maxVisibleSize": [
+        518,
+        333
+      ],
+      "bob": 0
+    },
+    {
+      "id": "octopus",
+      "name": "문어",
+      "motion": "말랑한 촉수 이동",
+      "image": "octopus.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "fps": 4,
+      "loop": true,
+      "frames": [
+        {
+          "rect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            72,
+            185,
+            585,
+            498
+          ]
+        },
+        {
+          "rect": [
+            627,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            75,
+            134,
+            519,
+            513
+          ]
+        },
+        {
+          "rect": [
+            0,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            133,
+            66,
+            499,
+            488
+          ]
+        },
+        {
+          "rect": [
+            627,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            66,
+            122,
+            533,
+            488
+          ]
+        }
+      ],
+      "maxVisibleSize": [
+        513,
+        422
+      ],
+      "bob": 0
+    },
+    {
+      "id": "whale",
+      "name": "고래",
+      "motion": "헤엄치듯 부유",
+      "image": "whale.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "fps": 4,
+      "loop": true,
+      "frames": [
+        {
+          "rect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            81,
+            128,
+            586,
+            474
+          ]
+        },
+        {
+          "rect": [
+            627,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            71,
+            104,
+            580,
+            459
+          ]
+        },
+        {
+          "rect": [
+            0,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            80,
+            101,
+            584,
+            432
+          ]
+        },
+        {
+          "rect": [
+            627,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            70,
+            138,
+            583,
+            466
+          ]
+        }
+      ],
+      "maxVisibleSize": [
+        513,
+        355
+      ],
+      "bob": 4
+    },
+    {
+      "id": "fox",
+      "name": "여우",
+      "motion": "짧은 걸음",
+      "image": "fox.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "fps": 4,
+      "loop": true,
+      "frames": [
+        {
+          "rect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            86,
+            64,
+            577,
+            524
+          ]
+        },
+        {
+          "rect": [
+            627,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            79,
+            50,
+            562,
+            524
+          ]
+        },
+        {
+          "rect": [
+            0,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            86,
+            48,
+            557,
+            516
+          ]
+        },
+        {
+          "rect": [
+            627,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            87,
+            63,
+            541,
+            528
+          ]
+        }
+      ],
+      "maxVisibleSize": [
+        491,
+        474
+      ],
+      "bob": 0
+    },
+    {
+      "id": "penguin",
+      "name": "펭귄",
+      "motion": "뒤뚱 걷기",
+      "image": "penguin.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "fps": 4,
+      "loop": true,
+      "frames": [
+        {
+          "rect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            100,
+            102,
+            565,
+            530
+          ]
+        },
+        {
+          "rect": [
+            627,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            59,
+            103,
+            527,
+            527
+          ]
+        },
+        {
+          "rect": [
+            0,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            104,
+            86,
+            575,
+            512
+          ]
+        },
+        {
+          "rect": [
+            627,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            63,
+            88,
+            528,
+            512
+          ]
+        }
+      ],
+      "maxVisibleSize": [
+        471,
+        428
+      ],
+      "bob": 0
+    },
+    {
+      "id": "ghost",
+      "name": "유령",
+      "motion": "둥둥 부유",
+      "image": "ghost.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "fps": 4,
+      "loop": true,
+      "frames": [
+        {
+          "rect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            61,
+            95,
+            565,
+            530
+          ]
+        },
+        {
+          "rect": [
+            627,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            43,
+            63,
+            555,
+            496
+          ]
+        },
+        {
+          "rect": [
+            0,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            61,
+            43,
+            570,
+            471
+          ]
+        },
+        {
+          "rect": [
+            627,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            31,
+            74,
+            545,
+            501
+          ]
+        }
+      ],
+      "maxVisibleSize": [
+        514,
+        435
+      ],
+      "bob": 4
+    },
+    {
+      "id": "cloud",
+      "name": "구름",
+      "motion": "호흡하며 부유",
+      "image": "cloud.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "fps": 4,
+      "loop": true,
+      "frames": [
+        {
+          "rect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            85,
+            133,
+            604,
+            507
+          ]
+        },
+        {
+          "rect": [
+            627,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            8,
+            175,
+            545,
+            481
+          ]
+        },
+        {
+          "rect": [
+            0,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            99,
+            59,
+            584,
+            485
+          ]
+        },
+        {
+          "rect": [
+            627,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            18,
+            89,
+            536,
+            458
+          ]
+        }
+      ],
+      "maxVisibleSize": [
+        537,
+        426
+      ],
+      "bob": 4
+    },
+    {
+      "id": "star",
+      "name": "별",
+      "motion": "기울며 부유",
+      "image": "star.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "fps": 4,
+      "loop": true,
+      "frames": [
+        {
+          "rect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            81,
+            99,
+            577,
+            550
+          ]
+        },
+        {
+          "rect": [
+            627,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            38,
+            89,
+            530,
+            535
+          ]
+        },
+        {
+          "rect": [
+            0,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            80,
+            48,
+            578,
+            492
+          ]
+        },
+        {
+          "rect": [
+            627,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            47,
+            80,
+            546,
+            531
+          ]
+        }
+      ],
+      "maxVisibleSize": [
+        499,
+        451
+      ],
+      "bob": 4
+    },
+    {
+      "id": "mushroom",
+      "name": "버섯",
+      "motion": "통통 뛰기",
+      "image": "mushroom.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "fps": 4,
+      "loop": true,
+      "frames": [
+        {
+          "rect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            79,
+            97,
+            568,
+            530
+          ]
+        },
+        {
+          "rect": [
+            627,
+            0,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            50,
+            126,
+            543,
+            531
+          ]
+        },
+        {
+          "rect": [
+            0,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            81,
+            44,
+            568,
+            488
+          ]
+        },
+        {
+          "rect": [
+            627,
+            627,
+            627,
+            627
+          ],
+          "visibleBounds": [
+            50,
+            91,
+            547,
+            520
+          ]
+        }
+      ],
+      "maxVisibleSize": [
+        497,
+        444
+      ],
+      "bob": 8
+    }
+  ]
+}

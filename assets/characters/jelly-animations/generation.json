@@ -1,0 +1,101 @@
+[
+  {
+    "id": "bunny",
+    "name": "토끼",
+    "ref": "jelly-01-04.png",
+    "target": "TOP LEFT pink floppy-eared bunny",
+    "motion": "small two-foot HOP: 1 neutral upright feet together, 2 crouch slightly wider with ears lowered, 3 rise stretched slightly with both feet tucked and ears trailing, 4 soft landing with ears settling",
+    "kind": "hop",
+    "prompt": "Create a genuine FOUR FRAME looping animation sprite atlas of ONLY the TOP LEFT pink floppy-eared bunny from reference. Same exact character identity, color, face, proportions, pearly iridescent translucent jelly 3D rendering, NO texture redesign. Square transparent PNG exact 2 columns x2 rows equal cells, chronological row major 1,2,3,4. Motion: small two-foot HOP: 1 neutral upright feet together, 2 crouch slightly wider with ears lowered, 3 rise stretched slightly with both feet tucked and ears trailing, 4 soft landing with ears settling. Frames are successive phases NOT four expressions. Small controlled deformation only, no limb morphing, consistent face and torso size across all frames. Fixed camera, same scale, character center same x and ground baseline same y in every cell except intended jump. Whole character with generous 15 percent cell padding, no clipped ears feet or tail, no crossing cell boundaries. Repeat seamlessly frame4 to1. Character faces front three-quarter LEFT consistently. Actual transparent alpha outside character, no numbers words labels grid shadows floor or backdrop, no other characters. Crisp production atlas suitable for 96px desktop pet. Exactly four copies of this ONE character only."
+  },
+  {
+    "id": "bear",
+    "name": "곰",
+    "ref": "jelly-01-04.png",
+    "target": "TOP RIGHT honey peach round-eared bear",
+    "motion": "gentle short upright BIPED WADDLE, 1 left foot forward right foot back, 2 both feet under body slight weight shift, 3 right foot forward left foot back, 4 passing weight shift opposite. Keep adorable short legs not seated pose",
+    "kind": "waddle",
+    "prompt": "Create a genuine FOUR FRAME looping animation sprite atlas of ONLY the TOP RIGHT honey peach round-eared bear from reference. Same exact character identity, color, face, proportions, pearly iridescent translucent jelly 3D rendering, NO texture redesign. Square transparent PNG exact 2 columns x2 rows equal cells, chronological row major 1,2,3,4. Motion: gentle short upright BIPED WADDLE, 1 left foot forward right foot back, 2 both feet under body slight weight shift, 3 right foot forward left foot back, 4 passing weight shift opposite. Keep adorable short legs not seated pose. Frames are successive phases NOT four expressions. Small controlled deformation only, no limb morphing, consistent face and torso size across all frames. Fixed camera, same scale, character center same x and ground baseline same y in every cell except intended jump. Whole character with generous 15 percent cell padding, no clipped ears feet or tail, no crossing cell boundaries. Repeat seamlessly frame4 to1. Character faces front three-quarter LEFT consistently. Actual transparent alpha outside character, no numbers words labels grid shadows floor or backdrop, no other characters. Crisp production atlas suitable for 96px desktop pet. Exactly four copies of this ONE character only."
+  },
+  {
+    "id": "cat",
+    "name": "고양이",
+    "ref": "jelly-01-04.png",
+    "target": "BOTTOM LEFT lavender cat with pointed ears and curled tail",
+    "motion": "gentle BIPED tiny cat mascot steps with body upright, left foot forward, passing, right foot forward, passing; tail sways a little. Only two walking feet, no four-legged quadruped anatomy",
+    "kind": "waddle",
+    "prompt": "Create a genuine FOUR FRAME looping animation sprite atlas of ONLY the BOTTOM LEFT lavender cat with pointed ears and curled tail from reference. Same exact character identity, color, face, proportions, pearly iridescent translucent jelly 3D rendering, NO texture redesign. Square transparent PNG exact 2 columns x2 rows equal cells, chronological row major 1,2,3,4. Motion: gentle BIPED tiny cat mascot steps with body upright, left foot forward, passing, right foot forward, passing; tail sways a little. Only two walking feet, no four-legged quadruped anatomy. Frames are successive phases NOT four expressions. Small controlled deformation only, no limb morphing, consistent face and torso size across all frames. Fixed camera, same scale, character center same x and ground baseline same y in every cell except intended jump. Whole character with generous 15 percent cell padding, no clipped ears feet or tail, no crossing cell boundaries. Repeat seamlessly frame4 to1. Character faces front three-quarter LEFT consistently. Actual transparent alpha outside character, no numbers words labels grid shadows floor or backdrop, no other characters. Crisp production atlas suitable for 96px desktop pet. Exactly four copies of this ONE character only."
+  },
+  {
+    "id": "seal",
+    "name": "물범",
+    "ref": "jelly-01-04.png",
+    "target": "BOTTOM RIGHT icy blue chubby SEAL with little flippers and forked tail",
+    "motion": "gentle belly SCOOT: neutral rounded body, body squashes a little wide flippers press down, body stretches forward a little with flippers lifted, returns rounded. Tail softly flicks, same face",
+    "prompt": "Create FOUR sequential animation frames of ONLY BOTTOM RIGHT icy blue chubby SEAL with little flippers and forked tail from reference, same exact face, proportions and translucent pearly jelly 3D material, same pastel color. Square transparent 2x2 equal cell sprite atlas, row major chronological phases. Motion gentle belly SCOOT: neutral rounded body, body squashes a little wide flippers press down, body stretches forward a little with flippers lifted, returns rounded. Tail softly flicks, same face. Small natural movements, smooth loop phase4 to1. Four copies of SAME character only, no other reference characters. Same character size, fixed camera mostly frontal three-quarter left, same center within each cell except tiny intended bobbing, at least 15% transparent padding. Whole silhouette inside cell, no overlapping neighbors. Keep original render style and identity absolutely, no redesign or clothing. True transparent alpha around silhouette, NO ground shadow backdrop glow fog numbers labels or grid. No anatomy morphing or extra appendages. Match original while changing only relevant flipper/tentacle/tail poses and subtle body compression. Suitable 96px desktop companion."
+  },
+  {
+    "id": "octopus",
+    "name": "문어",
+    "ref": "jelly-05-08.png",
+    "target": "TOP LEFT mint round OCTOPUS with short scalloped tentacles",
+    "motion": "soft jelly PULSE: tentacles spread and body compressed low, tentacles gather and body rises, tentacles tuck and body high slightly narrower, settle back down tentacles spread. Same tentacle count and identity, no legs",
+    "prompt": "Create FOUR sequential animation frames of ONLY TOP LEFT mint round OCTOPUS with short scalloped tentacles from reference, same exact face, proportions and translucent pearly jelly 3D material, same pastel color. Square transparent 2x2 equal cell sprite atlas, row major chronological phases. Motion soft jelly PULSE: tentacles spread and body compressed low, tentacles gather and body rises, tentacles tuck and body high slightly narrower, settle back down tentacles spread. Same tentacle count and identity, no legs. Small natural movements, smooth loop phase4 to1. Four copies of SAME character only, no other reference characters. Same character size, fixed camera mostly frontal three-quarter left, same center within each cell except tiny intended bobbing, at least 15% transparent padding. Whole silhouette inside cell, no overlapping neighbors. Keep original render style and identity absolutely, no redesign or clothing. True transparent alpha around silhouette, NO ground shadow backdrop glow fog numbers labels or grid. No anatomy morphing or extra appendages. Match original while changing only relevant flipper/tentacle/tail poses and subtle body compression. Suitable 96px desktop companion."
+  },
+  {
+    "id": "whale",
+    "name": "고래",
+    "ref": "jelly-05-08.png",
+    "target": "TOP RIGHT blue floating WHALE with white ridged belly and raised tail",
+    "motion": "gentle swimming HOVER loop: neutral tail level, tail tilts up and fins down body rises slightly, tail level at high point, tail down and fins up body lowers. Body stays same shape, no feet",
+    "prompt": "Create FOUR sequential animation frames of ONLY TOP RIGHT blue floating WHALE with white ridged belly and raised tail from reference, same exact face, proportions and translucent pearly jelly 3D material, same pastel color. Square transparent 2x2 equal cell sprite atlas, row major chronological phases. Motion gentle swimming HOVER loop: neutral tail level, tail tilts up and fins down body rises slightly, tail level at high point, tail down and fins up body lowers. Body stays same shape, no feet. Small natural movements, smooth loop phase4 to1. Four copies of SAME character only, no other reference characters. Same character size, fixed camera mostly frontal three-quarter left, same center within each cell except tiny intended bobbing, at least 15% transparent padding. Whole silhouette inside cell, no overlapping neighbors. Keep original render style and identity absolutely, no redesign or clothing. True transparent alpha around silhouette, NO ground shadow backdrop glow fog numbers labels or grid. No anatomy morphing or extra appendages. Match original while changing only relevant flipper/tentacle/tail poses and subtle body compression. Suitable 96px desktop companion."
+  },
+  {
+    "id": "fox",
+    "name": "여우",
+    "ref": "jelly-05-08.png",
+    "target": "BOTTOM LEFT apricot fox with large pointed ears and large curled fluffy simplified tail",
+    "motion": "tiny UPRIGHT BIPED WADDLE, neutral then left little foot forward right back, passing together then right foot forward left back, last passing. Tail sways gently in opposition. Two feet only, no four-legged anatomy",
+    "prompt": "Produce FOUR sequential animation frames of ONLY BOTTOM LEFT apricot fox with large pointed ears and large curled fluffy simplified tail from reference. Preserve same face identity color proportions and pearly iridescent translucent jelly 3D style EXACTLY. Square PNG with true transparent background; 2 columns x2 rows equal cells row major. Motion: tiny UPRIGHT BIPED WADDLE, neutral then left little foot forward right back, passing together then right foot forward left back, last passing. Tail sways gently in opposition. Two feet only, no four-legged anatomy. Four different incremental phases of same small looping movement, not four expressions. Keep fixed camera front or three-quarter left, constant character scale and face, center within each cell same except slight intended bobbing. No redesign, no anatomy morphing. Complete silhouette in every cell with at least 15 percent transparent margins. No text numbers grid scenery floors shadows fog or halo. One character repeated four times only. Loop frame4 to1 naturally. Carefully maintain identical material highlights and volume with small controlled movement."
+  },
+  {
+    "id": "penguin",
+    "name": "펭귄",
+    "ref": "jelly-05-08.png",
+    "target": "BOTTOM RIGHT lavender penguin with pale belly yellow beak and tiny yellow feet",
+    "motion": "four phases of PENGUIN WADDLE: left foot forward body tilts 3 degrees left, centered passing, right foot forward body tilts 3 degrees right, centered passing. Flippers sway slightly, constant short legs",
+    "prompt": "Produce FOUR sequential animation frames of ONLY BOTTOM RIGHT lavender penguin with pale belly yellow beak and tiny yellow feet from reference. Preserve same face identity color proportions and pearly iridescent translucent jelly 3D style EXACTLY. Square PNG with true transparent background; 2 columns x2 rows equal cells row major. Motion: four phases of PENGUIN WADDLE: left foot forward body tilts 3 degrees left, centered passing, right foot forward body tilts 3 degrees right, centered passing. Flippers sway slightly, constant short legs. Four different incremental phases of same small looping movement, not four expressions. Keep fixed camera front or three-quarter left, constant character scale and face, center within each cell same except slight intended bobbing. No redesign, no anatomy morphing. Complete silhouette in every cell with at least 15 percent transparent margins. No text numbers grid scenery floors shadows fog or halo. One character repeated four times only. Loop frame4 to1 naturally. Carefully maintain identical material highlights and volume with small controlled movement."
+  },
+  {
+    "id": "ghost",
+    "name": "유령",
+    "ref": "jelly-09-12.png",
+    "target": "TOP LEFT pearly WHITE sheet ghost with scalloped hem and two dark eyes small pink mouth",
+    "motion": "gentle FLOAT loop: neutral hovering, slightly taller lifted ghost hem waves right, slightly rounded high point hem relaxes, lowers with hem waving left. No legs or feet, flowing soft sheet edges",
+    "prompt": "Produce FOUR sequential animation frames of ONLY TOP LEFT pearly WHITE sheet ghost with scalloped hem and two dark eyes small pink mouth from reference. Preserve same face identity color proportions and pearly iridescent translucent jelly 3D style EXACTLY. Square PNG with true transparent background; 2 columns x2 rows equal cells row major. Motion: gentle FLOAT loop: neutral hovering, slightly taller lifted ghost hem waves right, slightly rounded high point hem relaxes, lowers with hem waving left. No legs or feet, flowing soft sheet edges. Four different incremental phases of same small looping movement, not four expressions. Keep fixed camera front or three-quarter left, constant character scale and face, center within each cell same except slight intended bobbing. No redesign, no anatomy morphing. Complete silhouette in every cell with at least 15 percent transparent margins. No text numbers grid scenery floors shadows fog or halo. One character repeated four times only. Loop frame4 to1 naturally. Carefully maintain identical material highlights and volume with small controlled movement."
+  },
+  {
+    "id": "cloud",
+    "name": "구름",
+    "ref": "jelly-09-12.png",
+    "target": "TOP RIGHT pearly pastel white CLOUD with three puffy lobes happy closed eyes and two droplet feet",
+    "motion": "soft hovering BREATH loop: neutral, wider compressed low, narrower taller high, return to neutral intermediate; puffy lobes softly roll, feet tuck slightly, not changing face",
+    "prompt": "Make a production FOUR FRAME loop sprite atlas of ONLY TOP RIGHT pearly pastel white CLOUD with three puffy lobes happy closed eyes and two droplet feet from supplied reference. Same EXACT face material color silhouette and proportions, pearly iridescent milky translucent jelly 3D render. Square actual transparent PNG, 2 columns x2 rows equal cells, four chronological phases row major. Motion soft hovering BREATH loop: neutral, wider compressed low, narrower taller high, return to neutral intermediate; puffy lobes softly roll, feet tuck slightly, not changing face. Match original style carefully, do not redesign, no new accessories. Fix camera, scale and local center for all cells except gentle specified vertical motion; constant highlight rendering. Four subtle sequential movement phases, seamless last-to-first, not expression variants. At least 15 percent transparent padding, all limbs and tips fully within cells. True alpha outside silhouette, no background fog glow shadows floors text numbers grid. One reference character repeated four times ONLY, no other species. Small controlled deformations suitable 96px desktop pet."
+  },
+  {
+    "id": "star",
+    "name": "별",
+    "ref": "jelly-09-12.png",
+    "target": "BOTTOM LEFT pale yellow rounded five-point STAR with tiny rounded feet and wink smile",
+    "motion": "gentle FLOAT-SWAY loop: upright middle, tilt 4 degrees left slightly raised, upright at high point, tilt 4 degrees right slightly lowered; points softly flex by tiny amount, face remains fixed",
+    "prompt": "Make a production FOUR FRAME loop sprite atlas of ONLY BOTTOM LEFT pale yellow rounded five-point STAR with tiny rounded feet and wink smile from supplied reference. Same EXACT face material color silhouette and proportions, pearly iridescent milky translucent jelly 3D render. Square actual transparent PNG, 2 columns x2 rows equal cells, four chronological phases row major. Motion gentle FLOAT-SWAY loop: upright middle, tilt 4 degrees left slightly raised, upright at high point, tilt 4 degrees right slightly lowered; points softly flex by tiny amount, face remains fixed. Match original style carefully, do not redesign, no new accessories. Fix camera, scale and local center for all cells except gentle specified vertical motion; constant highlight rendering. Four subtle sequential movement phases, seamless last-to-first, not expression variants. At least 15 percent transparent padding, all limbs and tips fully within cells. True alpha outside silhouette, no background fog glow shadows floors text numbers grid. One reference character repeated four times ONLY, no other species. Small controlled deformations suitable 96px desktop pet."
+  },
+  {
+    "id": "mushroom",
+    "name": "버섯",
+    "ref": "jelly-09-12.png",
+    "target": "BOTTOM RIGHT pink jelly MUSHROOM with dotted dome and milky stem face and two feet",
+    "motion": "small springy HOP loop: neutral feet on baseline, squashed stem cap dips slightly, extended stem cap rises and tiny feet tuck, landing stem compresses gently. Keep mushroom cap same size and dotted pattern",
+    "prompt": "Make a production FOUR FRAME loop sprite atlas of ONLY BOTTOM RIGHT pink jelly MUSHROOM with dotted dome and milky stem face and two feet from supplied reference. Same EXACT face material color silhouette and proportions, pearly iridescent milky translucent jelly 3D render. Square actual transparent PNG, 2 columns x2 rows equal cells, four chronological phases row major. Motion small springy HOP loop: neutral feet on baseline, squashed stem cap dips slightly, extended stem cap rises and tiny feet tuck, landing stem compresses gently. Keep mushroom cap same size and dotted pattern. Match original style carefully, do not redesign, no new accessories. Fix camera, scale and local center for all cells except gentle specified vertical motion; constant highlight rendering. Four subtle sequential movement phases, seamless last-to-first, not expression variants. At least 15 percent transparent padding, all limbs and tips fully within cells. True alpha outside silhouette, no background fog glow shadows floors text numbers grid. One reference character repeated four times ONLY, no other species. Small controlled deformations suitable 96px desktop pet."
+  }
+]

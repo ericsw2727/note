@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (QApplication, QFileDialog, QFrame, QGridLayout, Q
                                QWidgetAction)
 
 from net import DRAW_TYPES, IP_RE, PORT, RELAY_URL, Net, UPnP, is_private, local_ip
-from pet import Pet
+from pet import CHARACTERS, Pet, character_name, character_pixmap
 from resources import (ACCENT, DEFAULT_SKIN, FONT, INK, PAPER, SKIN_ORDER, STAMP_NAMES, STAMPS, icon, load_skin,
                        stamp_pixmap, status_pixmap, style_menu, svg_url, use_skin_icons)
 
@@ -2092,6 +2092,36 @@ class Easel(QWidget):
         col.addLayout(row)
         return self._widget_action(menu, w)
 
+    def _pet_chips(self, menu):
+        """산책 친구 고르기: 낙서장을 접으면 작업표시줄을 걷는 캐릭터. 푸들이 기본."""
+        w = QWidget()
+        col = QVBoxLayout(w)
+        col.setContentsMargins(10, 4, 10, 4)
+        col.setSpacing(4)
+        cap = QLabel("산책 친구 · 접으면 작업표시줄에 나와요")
+        cap.setObjectName("muted")
+        col.addWidget(cap)
+        grid = QGridLayout()
+        grid.setSpacing(2)
+        for i, c in enumerate(CHARACTERS):
+            b = QToolButton()
+            b.setObjectName("chip")
+            b.setCheckable(True)
+            b.setChecked(c["id"] == self.pet.char)
+            b.setIcon(QIcon(character_pixmap(c["id"])))
+            b.setIconSize(QSize(26, 26))
+            b.setFixedSize(34, 34)
+            b.setCursor(Qt.PointingHandCursor)
+            b.setToolTip(c["name"] + (" (기본)" if c["id"] == "poodle" else ""))
+            b.clicked.connect(lambda _=False, cid=c["id"]: (menu.close(), self.choose_pet(cid)))
+            grid.addWidget(b, i // 7, i % 7)
+        col.addLayout(grid)
+        return self._widget_action(menu, w)
+
+    def choose_pet(self, cid):
+        self.pet.set_character(cid)
+        self.toast.show_text(f"산책 친구: {character_name(self.pet.char)} · 낙서장을 접으면 나와요", 3000)
+
     def set_status(self, kind, text):
         self.status_kind = kind
         self.status_dot.setPixmap(status_pixmap(kind, self.status_dot.width() or 12))
@@ -2119,6 +2149,8 @@ class Easel(QWidget):
             m.addAction(icon("join", 14), "방 들어가기", self.open_join)
         m.addSeparator()
         m.addAction(self._skin_chips(m))
+        if len(CHARACTERS) > 1:
+            m.addAction(self._pet_chips(m))
         m.addAction(self._slider_action(m, "expand", "크기", SCALE_MIN, SCALE_MAX, self.scale_percent(),
                                         self.set_scale))
         m.addAction(self._slider_action(m, "opacity", "불투명도", 20, 100, round(self.windowOpacity() * 100),

@@ -1,0 +1,53 @@
+[
+  {
+    "key": "jelly-01-04",
+    "names": [
+      "토끼",
+      "곰",
+      "고양이",
+      "물범"
+    ],
+    "ids": [
+      "bunny",
+      "bear",
+      "cat",
+      "seal"
+    ],
+    "description": "Top left reference 01 pink floppy-eared bunny; top right reference 02 honey peach bear; bottom left reference 03 lavender cat with curled tail; bottom right reference 04 icy blue seal.",
+    "prompt": "Production transparent PNG desktop companion atlas from supplied concept reference. Extract and faithfully recreate FOUR specified characters only, exact square 2 columns x 2 rows equal cells. Top left reference 01 pink floppy-eared bunny; top right reference 02 honey peach bear; bottom left reference 03 lavender cat with curled tail; bottom right reference 04 icy blue seal. Preserve their exact reference faces, poses, silhouette, material, proportions and colors; soft milky translucent pearlescent iridescent 3D jelly, delicate opal highlights, dark tiny eyes, subtle mouth. Match original, not redesign. Every full character wholly within own square cell with generous 12 percent transparent margin, no overlap, visually consistent size. Completely REMOVE reference gray background, ground shadows, numbers and grid. ACTUAL TRANSPARENT alpha outside character silhouettes; no fog, no halo, no backdrop, no floor. Inside characters preserve luminous creamy volume and pastel transparent-looking material highlights so they remain readable on dark desktop backgrounds. No accessories, labels, text, other characters. Four static idle poses only, no animation sequence. Sharp production silhouettes at 64-96px."
+  },
+  {
+    "key": "jelly-05-08",
+    "names": [
+      "문어",
+      "고래",
+      "여우",
+      "펭귄"
+    ],
+    "ids": [
+      "octopus",
+      "whale",
+      "fox",
+      "penguin"
+    ],
+    "description": "Top left reference 05 mint octopus; top right reference 06 baby blue floating whale; bottom left reference 07 apricot fox with big tail; bottom right reference 08 lavender penguin.",
+    "prompt": "Production transparent PNG desktop companion atlas from supplied concept reference. Extract and faithfully recreate FOUR specified characters only, exact square 2 columns x 2 rows equal cells. Top left reference 05 mint octopus; top right reference 06 baby blue floating whale; bottom left reference 07 apricot fox with big tail; bottom right reference 08 lavender penguin. Preserve their exact reference faces, poses, silhouette, material, proportions and colors; soft milky translucent pearlescent iridescent 3D jelly, delicate opal highlights, dark tiny eyes, subtle mouth. Match original, not redesign. Every full character wholly within own square cell with generous 12 percent transparent margin, no overlap, visually consistent size. Completely REMOVE reference gray background, ground shadows, numbers and grid. ACTUAL TRANSPARENT alpha outside character silhouettes; no fog, no halo, no backdrop, no floor. Inside characters preserve luminous creamy volume and pastel transparent-looking material highlights so they remain readable on dark desktop backgrounds. No accessories, labels, text, other characters. Four static idle poses only, no animation sequence. Sharp production silhouettes at 64-96px."
+  },
+  {
+    "key": "jelly-09-12",
+    "names": [
+      "유령",
+      "구름",
+      "별",
+      "버섯"
+    ],
+    "ids": [
+      "ghost",
+      "cloud",
+      "star",
+      "mushroom"
+    ],
+    "description": "Top left reference 09 pearly white floating sheet ghost; top right reference 10 soft white pastel opal cloud with tiny droplet feet; bottom left reference 11 translucent pale yellow rounded star mascot with feet; bottom right reference 12 pink jelly mushroom with milky stem and feet.",
+    "prompt": "Production transparent PNG desktop companion atlas from supplied concept reference. Extract and faithfully recreate FOUR specified characters only, exact square 2 columns x 2 rows equal cells. Top left reference 09 pearly white floating sheet ghost; top right reference 10 soft white pastel opal cloud with tiny droplet feet; bottom left reference 11 translucent pale yellow rounded star mascot with feet; bottom right reference 12 pink jelly mushroom with milky stem and feet. Preserve their exact reference faces, poses, silhouette, material, proportions and colors; soft milky translucent pearlescent iridescent 3D jelly, delicate opal highlights, dark tiny eyes, subtle mouth. Match original, not redesign. Every full character wholly within own square cell with generous 12 percent transparent margin, no overlap, visually consistent size. Completely REMOVE reference gray background, ground shadows, numbers and grid. ACTUAL TRANSPARENT alpha outside character silhouettes; no fog, no halo, no backdrop, no floor. Inside characters preserve luminous creamy volume and pastel transparent-looking material highlights so they remain readable on dark desktop backgrounds. No accessories, labels, text, other characters. Four static idle poses only, no animation sequence. Sharp production silhouettes at 64-96px."
+  }
+]

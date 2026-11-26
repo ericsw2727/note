@@ -277,6 +277,77 @@ def stamps():
     (dst / "stamps.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
+# ───────── 산책 친구 (푸들 대신 고를 수 있는 젤 캐릭터) ─────────
+JELLY_ANIM = SRC / "characters" / "jelly-animations"
+JELLY_STILL = SRC / "characters" / "jelly-companions"
+JELLY_HEIGHT = 64          # 화면에서의 키(px). 푸들(68)과 비슷하게.
+JELLY_MAX_W = 86           # 옆으로 긴 캐릭터는 너비를 이만큼으로
+JELLY_SIDE = {"seal", "whale"}            # 머리가 왼쪽 (오른쪽으로 갈 때 뒤집는다). 나머지는 정면.
+JELLY_FLOAT = {"whale", "ghost", "cloud", "star"}   # 바닥에서 조금 떠서 둥둥
+
+
+def _alpha_box(img, thr=40):
+    a = np.asarray(img.getchannel("A"))
+    ys, xs = np.nonzero(a >= thr)
+    return int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
+
+
+def _jelly_cut(img, box, scale, pad=10):
+    """보이는 영역만 잘라 줄이고, 흐린 빛 번짐은 지운다."""
+    x0, y0, x1, y1 = box
+    img = img.crop((max(0, x0 - pad), max(0, y0 - pad), min(img.width, x1 + pad), min(img.height, y1 + pad)))
+    a = np.asarray(img.getchannel("A")).copy()
+    a[a < 40] = 0            # 바깥 빛 번짐은 잘린 자리가 네모로 보여서 지운다 (보이는 영역 기준과 같은 40)
+    img.putalpha(Image.fromarray(a))
+    w, h = max(1, round(img.width * scale)), max(1, round(img.height * scale))
+    return img.resize((w, h), Image.LANCZOS)
+
+
+def jelly_pets():
+    """젤 캐릭터 12종: 움직임 4프레임(walk0~3) + 기본 자세(idle). res/pets/<id>/, 목록은 res/pets/pets.json."""
+    dst = OUT / "pets"
+    if dst.exists():
+        shutil.rmtree(dst)
+    if not (JELLY_ANIM / "animations.json").exists():
+        return
+    anim = json.loads((JELLY_ANIM / "animations.json").read_text(encoding="utf-8"))
+    still = {f["id"]: f for f in json.loads((JELLY_STILL / "atlas.json").read_text(encoding="utf-8"))["frames"]}
+    out = []
+    for c in anim["characters"]:
+        cid = c["id"]
+        (dst / cid).mkdir(parents=True)
+        vw, vh = c["maxVisibleSize"]
+        scale = min(JELLY_HEIGHT / vh, JELLY_MAX_W / vw)       # 화면 px / 원본 px
+        frames = {}
+
+        def save(name, img):
+            img.save(dst / cid / f"{name}.png", optimize=True)
+            frames[name] = {"file": f"{name}.png", "size": [img.width / PET_DPR, img.height / PET_DPR]}
+
+        sheet = Image.open(JELLY_ANIM / c["image"]).convert("RGBA")
+        for i, f in enumerate(c["frames"]):
+            x, y, w, h = f["rect"]
+            cell = sheet.crop((x, y, x + w, y + h))
+            save(f"walk{i}", _jelly_cut(cell, f["visibleBounds"], scale * PET_DPR))
+        s = still.get(cid)
+        if s:
+            x, y, w, h = s["rect"]
+            cell = Image.open(JELLY_STILL / s["image"]).convert("RGBA").crop((x, y, x + w, y + h))
+            box = _alpha_box(cell)
+            # 기본 자세는 원본 크기가 달라서 걷기 프레임과 같은 키가 되게 따로 맞춘다
+            k = min(JELLY_HEIGHT / (box[3] - box[1]), JELLY_MAX_W / (box[2] - box[0]))
+            save("idle", _jelly_cut(cell, box, k * PET_DPR))
+        else:
+            shutil.copy(dst / cid / "walk0.png", dst / cid / "idle.png")
+            frames["idle"] = dict(frames["walk0"], file="idle.png")
+        out.append({"id": cid, "name": c["name"], "motion": c.get("motion", ""), "fps": c.get("fps", 4),
+                    "hop": round(c.get("bob", 0) * JELLY_HEIGHT / 96, 1),     # bob은 96px 미리보기 기준
+                    "float": cid in JELLY_FLOAT, "side": cid in JELLY_SIDE, "frames": frames})
+    (dst / "pets.json").write_text(json.dumps({"dpr": PET_DPR, "characters": out}, ensure_ascii=False, indent=1),
+                                   encoding="utf-8")
+    print("  pets:", ", ".join(c["id"] for c in out))
+
+
 def main():
     OUT.mkdir(exist_ok=True)
     easel()
@@ -285,6 +356,7 @@ def main():
     skins()
     pet()
     stamps()
+    jelly_pets()
     total = sum(f.stat().st_size for f in OUT.rglob("*") if f.is_file())
     print(f"res/ 생성 완료 ({total / 1024:.0f} KB)")
 
