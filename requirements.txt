@@ -1,0 +1,6 @@
+PySide6-Essentials>=6.8
+websockets>=14
+pyinstaller>=6
+# 에셋 준비(tools/prepare_assets.py)에만 필요
+Pillow
+numpy

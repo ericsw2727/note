@@ -1,0 +1,83 @@
+{
+  "cellSize": [
+    627,
+    627
+  ],
+  "layout": "2x2 row-major",
+  "walk": {
+    "image": "walk.png",
+    "frames": [
+      [
+        0,
+        0,
+        627,
+        627
+      ],
+      [
+        627,
+        0,
+        627,
+        627
+      ],
+      [
+        0,
+        627,
+        627,
+        627
+      ],
+      [
+        627,
+        627,
+        627,
+        627
+      ]
+    ],
+    "direction": "left",
+    "right": "mirror horizontally",
+    "fpsSuggestion": 6,
+    "status": "draft; normalize scale and foot baseline before final animation"
+  },
+  "reactions": {
+    "image": "reactions.png",
+    "frames": {
+      "greeting": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "alert": [
+        627,
+        0,
+        627,
+        627
+      ],
+      "rest": [
+        0,
+        627,
+        627,
+        627
+      ],
+      "happy": [
+        627,
+        627,
+        627,
+        627
+      ]
+    }
+  },
+  "easel": {
+    "image": "../ui/easel.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "canvasSafeRect": [
+      135,
+      270,
+      970,
+      640
+    ],
+    "note": "Conservative interior rectangle; recheck at target display scale. Preserve image aspect ratio."
+  }
+}

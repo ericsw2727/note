@@ -1,0 +1,42 @@
+{
+  "name": "파우더 블루",
+  "image": "notepad.png",
+  "size": [
+    1536,
+    1024
+  ],
+  "normalizedRects": "[x,y,width,height], relative to entire PNG including transparent padding",
+  "canvasSafeRect": [
+    0.23,
+    0.3,
+    0.54,
+    0.46
+  ],
+  "headerControlArea": [
+    0.72,
+    0.17,
+    0.065,
+    0.035
+  ],
+  "toolbarArea": [
+    0.24,
+    0.82,
+    0.52,
+    0.06
+  ],
+  "colors": {
+    "ink": "#243F50",
+    "folder": "#BCD5E8",
+    "paper": "#FFFFFF",
+    "pens": [
+      "#243F50",
+      "#EC9C8B",
+      "#F0C76E",
+      "#B5C39C",
+      "#96BFE2",
+      "#C5B2D0"
+    ]
+  },
+  "suggestedImageWidth": 480,
+  "note": "visible folder is about 63 percent of full PNG width; 480px full image gives about 300px visible widget; fit to alpha bounds in app if desired. Rectangles are conservative suggestions."
+}

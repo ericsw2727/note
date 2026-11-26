@@ -1,0 +1,25 @@
+{
+  "colors": {
+    "ink": "#594438",
+    "paper": "#FFF8ED",
+    "accent": "#75A49B",
+    "pen": [
+      "#383735",
+      "#E57772",
+      "#EDA959",
+      "#E8C85D",
+      "#75A49B",
+      "#AB8EC6"
+    ]
+  },
+  "iconSize": 20,
+  "minimumHitArea": 28,
+  "opacity": {
+    "default": 1,
+    "suggestedMin": 0.2
+  },
+  "pet": {
+    "size": 80,
+    "walkFpsSuggestion": 6
+  }
+}

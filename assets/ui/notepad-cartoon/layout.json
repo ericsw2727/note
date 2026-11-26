@@ -1,0 +1,41 @@
+{
+  "image": "notepad.png",
+  "size": [
+    1141,
+    1379
+  ],
+  "rectConvention": "normalized [x,y,width,height] relative to full image; multiply x/width by image width and y/height by image height",
+  "canvasSafeRect": [
+    0.13,
+    0.25,
+    0.64,
+    0.48
+  ],
+  "headerControlArea": [
+    0.78,
+    0.18,
+    0.1,
+    0.025
+  ],
+  "toolbarArea": [
+    0.15,
+    0.83,
+    0.7,
+    0.065
+  ],
+  "suggestedDisplayWidth": 300,
+  "colors": {
+    "ink": "#56321F",
+    "paper": "#FFF5E5",
+    "header": "#F6B08A",
+    "toolbar": "#FFE08A",
+    "pens": [
+      "#56321F",
+      "#EC9C8B",
+      "#F0C76E",
+      "#B5C39C",
+      "#C5B2D0"
+    ]
+  },
+  "status": "Conservative placement suggestions; verify actual UI hit areas at chosen size"
+}
