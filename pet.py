@@ -317,7 +317,7 @@ class Pet(QWidget):
         m = style_menu(QMenu(self))
         m.addAction(icon("expand", 14), "낙서장 펼치기", self.on_expand)
         if self.on_memo:
-            m.addAction(icon("new-note", 14), "내 메모", self.on_memo)
+            m.addAction(icon("memo", 14), "내 메모", self.on_memo)
         m.addAction(icon("play" if self.stopped else "pause", 14),
                     "다시 걷기" if self.stopped else "걷기 멈추기", self._toggle_stop)
         m.addSeparator()

@@ -124,33 +124,6 @@ def exit_icon(color, size=32):
     return QIcon(pm)
 
 
-def memo_icon(color, size=32):
-    """내 메모 아이콘: 모서리가 접힌 메모지와 글 줄."""
-    pm = QPixmap(size, size)
-    pm.fill(Qt.transparent)
-    p = QPainter(pm)
-    p.setRenderHint(QPainter.Antialiasing)
-    p.scale(size / 24, size / 24)
-    p.setPen(QPen(QColor(color), 2.0, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-    sheet = QPainterPath()
-    sheet.moveTo(5, 4)
-    sheet.lineTo(19, 4)
-    sheet.lineTo(19, 15)
-    sheet.lineTo(14, 20)
-    sheet.lineTo(5, 20)
-    sheet.closeSubpath()
-    p.drawPath(sheet)
-    fold = QPainterPath()
-    fold.moveTo(19, 15)
-    fold.lineTo(14, 15)
-    fold.lineTo(14, 20)
-    p.drawPath(fold)
-    p.drawLine(QPointF(8.5, 9), QPointF(15.5, 9))
-    p.drawLine(QPointF(8.5, 12.5), QPointF(13, 12.5))
-    p.end()
-    return QIcon(pm)
-
-
 class MemoPad(QWidget):
     """나만 보는 메모 창. 친구에게는 보내지 않고, 쓰는 대로 내 컴퓨터에 저장된다.
 
@@ -194,6 +167,7 @@ class MemoPad(QWidget):
         self.buttons = {}
         for name, tip, slot in (("paste", "붙여넣기 · 복사해 둔 글을 맨 아래에 붙여요", self.paste_clip),
                                 ("copy", "전부 복사", self.copy_all),
+                                ("save-text", "txt 파일로 저장 (Ctrl+S)", self.save_txt),
                                 ("clear", "메모 비우기", self.clear_memo),
                                 ("close", "메모 닫기 (내용은 남아요)", self.close)):
             b = QToolButton()
@@ -216,6 +190,7 @@ class MemoPad(QWidget):
             pass
         self.edit.moveCursor(QTextCursor.End)
         self._save_timer = QTimer(self, singleShot=True, interval=400, timeout=self.save)
+        QShortcut(QKeySequence("Ctrl+S"), self, self.save_txt)
         self.edit.textChanged.connect(self._save_timer.start)
         self.setMouseTracking(True)
         self.card.setMouseTracking(True)
@@ -242,10 +217,9 @@ class MemoPad(QWidget):
             f"QScrollBar::handle:vertical {{ background: {tint(0.22)}; border-radius: 3px; min-height: 24px; }}"
             "QScrollBar::add-line, QScrollBar::sub-line { height: 0; }"
             "QScrollBar::add-page, QScrollBar::sub-page { background: transparent; }")
-        ic = {"paste": icon("new-note", 14), "copy": icon("copy", 14), "clear": icon("clear", 14),
-              "close": icon("close", 14)}
+        names = {"paste": "new-note"}
         for name, b in self.buttons.items():
-            b.setIcon(ic[name])
+            b.setIcon(icon(names.get(name, name), 14))
         self._ink = QColor(ink)
         self.update()
 
@@ -261,6 +235,30 @@ class MemoPad(QWidget):
             self.say("저장됨")
         except OSError:
             self.say("저장하지 못했어요")
+
+    def save_txt(self):
+        """메모 내용을 원하는 곳에 txt 파일로 저장한다 (자동 저장과는 별개의 내보내기)."""
+        text = self.edit.toPlainText()
+        if not text.strip():
+            self.say("저장할 글이 없어요")
+            return
+        docs = QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation)
+        folder = str(self.settings.value("memo/dir", docs))
+        name = f"메모_{datetime.now():%Y%m%d_%H%M%S}.txt"
+        path, _ = QFileDialog.getSaveFileName(self, "txt 파일로 저장", f"{folder}/{name}", "텍스트 파일 (*.txt)")
+        self.raise_()
+        if not path:
+            return
+        if not path.lower().endswith(".txt"):
+            path += ".txt"
+        try:
+            # 메모장에서 한글이 깨지지 않게 줄바꿈은 Windows 방식, 인코딩은 UTF-8
+            Path(path).write_text(text, encoding="utf-8", newline="\r\n")
+        except OSError:
+            self.say("저장하지 못했어요. 다른 위치를 골라 보세요.")
+            return
+        self.settings.setValue("memo/dir", str(Path(path).parent))
+        self.say(f"저장했어요: {Path(path).name}")
 
     def paste_clip(self):
         text = QGuiApplication.clipboard().text()
@@ -1528,7 +1526,8 @@ class Easel(QWidget):
         self.bar_buttons = []
         for name, tip, slot in (("close", "닫기", self.quit),
                                 ("collapse", "접기", self.collapse),
-                                ("menu", "메뉴", self.open_menu)):
+                                ("menu", "메뉴", self.open_menu),
+                                ("memo", "내 메모 · 나만 보여요", self.toggle_memo)):
             b = QToolButton(self)
             b.setObjectName("bar")
             b.setIcon(icon(name, 32))
@@ -1536,7 +1535,7 @@ class Easel(QWidget):
             b.setCursor(Qt.PointingHandCursor)
             b.clicked.connect(slot)
             self.bar_buttons.append(b)
-        self.menu_btn = self.bar_buttons[-1]
+        self.menu_btn, self.memo_btn = self.bar_buttons[2], self.bar_buttons[3]
         # 연결 상태 아래: 방 들어가기 / 방 만들기 (아직 방에 없을 때만 보인다)
         self.act_join = QToolButton(self)
         self.act_join.setText("방 들어가기")
@@ -1774,7 +1773,7 @@ class Easel(QWidget):
             self.color = self.pens[old_pens.index(self.color)]
         for b, name in self.icon_buttons:
             b.setIcon(icon(name, 32))
-        for b, name in zip(self.bar_buttons, ("close", "collapse", "menu")):
+        for b, name in zip(self.bar_buttons, ("close", "collapse", "menu", "memo")):
             b.setIcon(icon(name, 32))
         self.pill.reload_icons()
         self.memo.restyle(skin_color("ink"), skin_color("paper"))
@@ -2119,8 +2118,6 @@ class Easel(QWidget):
             m.addAction(icon("room", 14), "방 만들기", self.start_host)
             m.addAction(icon("join", 14), "방 들어가기", self.open_join)
         m.addSeparator()
-        m.addAction(memo_icon(ink, 14), "내 메모 · 나만 보여요", self.open_memo)
-        m.addSeparator()
         m.addAction(self._skin_chips(m))
         m.addAction(self._slider_action(m, "expand", "크기", SCALE_MIN, SCALE_MAX, self.scale_percent(),
                                         self.set_scale))
@@ -2147,6 +2144,13 @@ class Easel(QWidget):
 
     def open_memo(self):
         self.memo.open(self if self.isVisible() else None)
+
+    def toggle_memo(self):
+        """위쪽 메모 버튼: 열려 있으면 닫고, 닫혀 있으면 연다."""
+        if self.memo.isVisible():
+            self.memo.close()
+        else:
+            self.open_memo()
 
     def room_display(self):
         """방장이 친구에게 알려줄 방 이름: 방 코드 > 바깥 주소 > 같은 와이파이 주소 순."""
