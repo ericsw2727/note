@@ -18,7 +18,7 @@ from PySide6.QtCore import QPoint, QRectF, Qt, QTimer
 from PySide6.QtGui import QAction, QColor, QFont, QFontMetrics, QGuiApplication, QPainter, QPixmap, QTransform
 from PySide6.QtWidgets import QMenu, QWidget
 
-from resources import FONT, INK, RES, icon, svg_pixmap
+from resources import FONT, INK, RES, icon, style_menu, svg_pixmap
 
 AWAY_SECONDS = 300
 WALK_SPEED = 38          # px/초
@@ -313,7 +313,7 @@ class Pet(QWidget):
             self.react("happy", 1.5, "다시 산책 갈게요!")
 
     def contextMenuEvent(self, e):
-        m = QMenu(self)
+        m = style_menu(QMenu(self))
         m.addAction(icon("expand", 14), "낙서장 펼치기", self.on_expand)
         m.addAction(icon("play" if self.stopped else "pause", 14),
                     "다시 걷기" if self.stopped else "걷기 멈추기", self._toggle_stop)

@@ -1,4 +1,4 @@
-"""바탕화면 위에 떠 있는 원목 이젤 낙서장 (PySide6).
+﻿"""바탕화면 위에 떠 있는 원목 이젤 낙서장 (PySide6).
 
 한 사람이 '방 만들기'를 누르면 방장이 되고, 다른 사람들은 방 코드(또는 방장 IP)로 '참가'한다.
 통신은 net.py가 맡고, 이 파일은 화면만 다룬다.
@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (QApplication, QFileDialog, QFrame,QHBoxLayout, QL
 from net import DRAW_TYPES, IP_RE, PORT, RELAY_URL, Net, UPnP, is_private, local_ip
 from pet import Pet
 from resources import (ACCENT, DEFAULT_SKIN, FONT, INK, PAPER, SKIN_ORDER, icon, load_skin, status_pixmap,
-                       svg_url, use_skin_icons)
+                       style_menu, svg_url, use_skin_icons)
 
 ERASE = "erase"
 WINDOW = 400                          # 메모장 창 기본 너비(px). 높이는 스킨 그림 비율대로.
@@ -1564,27 +1564,95 @@ class Easel(QWidget):
         else:
             self.toast.show_text("저장하지 못했어요. 다른 위치를 골라 보세요.", 4000)
 
-    def _slider_action(self, menu, label, lo, hi, value, setter):
-        """메뉴 안에 넣는 '이름 ─●─ 값%' 슬라이더. setter는 실제 적용된 값을 돌려준다."""
+    @staticmethod
+    def _widget_action(menu, widget):
+        act = QWidgetAction(menu)
+        act.setDefaultWidget(widget)
+        return act
+
+    def _slider_action(self, menu, icon_name, label, lo, hi, value, setter):
+        """메뉴 안에 넣는 '아이콘 이름 ──●── 값%' 슬라이더. setter는 실제 적용된 값을 돌려준다."""
         w = QWidget()
         row = QHBoxLayout(w)
-        row.setContentsMargins(16, 4, 12, 4)
+        row.setContentsMargins(11, 3, 14, 3)
+        row.setSpacing(8)
+        ic = QLabel()
+        ic.setPixmap(icon(icon_name, 14).pixmap(14, 14))
         lab = QLabel(label)
-        lab.setFixedWidth(52)
+        lab.setFixedWidth(48)
         val = QLabel(f"{value}%")
-        val.setFixedWidth(38)
+        val.setObjectName("muted")
+        val.setFixedWidth(34)
         val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         sl = QSlider(Qt.Horizontal)
         sl.setRange(lo, hi)
-        sl.setFixedWidth(110)
+        sl.setMinimumWidth(120)
         sl.setValue(value)
+        sl.setCursor(Qt.PointingHandCursor)
         sl.valueChanged.connect(lambda v: val.setText(f"{setter(v)}%"))
+        row.addWidget(ic)
         row.addWidget(lab)
-        row.addWidget(sl)
+        row.addWidget(sl, 1)
         row.addWidget(val)
-        act = QWidgetAction(menu)
-        act.setDefaultWidget(w)
-        return act
+        return self._widget_action(menu, w)
+
+    def _room_header(self, menu):
+        """메뉴 맨 위: 연결 상태 점 + 방 정보 (작은 설명 / 굵은 방 이름)."""
+        if self.net and self.net.is_host:
+            cap, big = f"내가 만든 방 · {self.count}명", self.room_display()
+        elif self.net:
+            how = "직접 연결" if self.mode == "direct" else "중계 서버"
+            cap, big = f"참가한 방 · {how}", self.room_name or "?"
+        else:
+            cap, big = "같이 낙서하기", "아직 방에 들어가지 않았어요"
+        w = QWidget()
+        row = QHBoxLayout(w)
+        row.setContentsMargins(13, 6, 14, 6)
+        row.setSpacing(10)
+        dot = QLabel()
+        dot.setPixmap(status_pixmap(self.status_kind if self.net else "offline", 10))
+        col = QVBoxLayout()
+        col.setSpacing(0)
+        c = QLabel(cap)
+        c.setObjectName("muted")
+        b = QLabel(big)
+        b.setObjectName("big" if self.net else "")
+        col.addWidget(c)
+        col.addWidget(b)
+        row.addWidget(dot, 0, Qt.AlignVCenter)
+        row.addLayout(col, 1)
+        return self._widget_action(menu, w)
+
+    def _skin_chips(self, menu):
+        """스킨 고르기: 겉모양 미리보기 세 개를 나란히. 누르면 바로 바뀌고 메뉴가 닫힌다."""
+        w = QWidget()
+        col = QVBoxLayout(w)
+        col.setContentsMargins(10, 4, 10, 4)
+        col.setSpacing(4)
+        cap = QLabel("메모장 모양")
+        cap.setObjectName("muted")
+        col.addWidget(cap)
+        row = QHBoxLayout()
+        row.setSpacing(6)
+        for sid in SKIN_ORDER:
+            sk = load_skin(sid)
+            b = QToolButton()
+            b.setObjectName("chip")
+            b.setCheckable(True)
+            b.setChecked(sid == self.skin["id"])
+            thumb = QPixmap(str(sk["frame"])).scaled(QSize(88, 72), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            thumb.setDevicePixelRatio(2.0)
+            b.setIcon(QIcon(thumb))
+            b.setIconSize(QSize(44, 36))
+            b.setText(sk["name"])
+            b.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+            b.setStyleSheet("font-size: 8pt;")
+            b.setCursor(Qt.PointingHandCursor)
+            b.setToolTip(sk["name"] + (" (기본)" if sid == DEFAULT_SKIN else ""))
+            b.clicked.connect(lambda _=False, sid=sid: (menu.close(), self.apply_skin(sid)))
+            row.addWidget(b, 1)
+        col.addLayout(row)
+        return self._widget_action(menu, w)
 
     def set_status(self, kind, text):
         self.status_kind = kind
@@ -1594,36 +1662,31 @@ class Easel(QWidget):
 
     # ── 메뉴 ──
     def open_menu(self):
-        m = QMenu(self)
+        ink, paper = skin_color("ink"), skin_color("paper")
+        m = style_menu(QMenu(self), ink, paper)
+        m.addAction(self._room_header(m))
         if self.net and self.net.is_host:
-            m.addAction(f"내가 만든 방: {self.room_display()}").setEnabled(False)
             if self.code:
                 m.addAction(icon("copy", 14), "방 코드 복사", lambda: self._copy(self.code))
             if self.public:
-                m.addAction(icon("copy", 14), f"주소 복사 ({self.public})", lambda: self._copy(self.public))
+                m.addAction(icon("copy", 14), f"주소 복사 · {self.public}", lambda: self._copy(self.public))
             if self.lan:
-                m.addAction(icon("copy", 14), f"같은 와이파이 주소 복사 ({self.lan})", lambda: self._copy(self.lan))
-        elif self.net:
-            how = "직접 연결" if self.mode == "direct" else "중계 서버"
-            m.addAction(f"참가한 방: {self.room_name or '?'} ({how})").setEnabled(False)
-            if self.room_name:
-                m.addAction(icon("copy", 14), "방 이름 복사", lambda: self._copy(self.room_name))
-        else:
-            m.addAction("아직 방에 들어가지 않았어요").setEnabled(False)
+                m.addAction(icon("copy", 14), f"같은 와이파이 주소 복사 · {self.lan}", lambda: self._copy(self.lan))
+        elif self.net and self.room_name:
+            m.addAction(icon("copy", 14), "방 이름 복사", lambda: self._copy(self.room_name))
         if self.net:
-            m.addAction(exit_icon(INK, 14), "방 나가기 (처음 화면으로)", lambda: self.leave_room())
+            m.addAction(exit_icon(ink, 14), "방 나가기", lambda: self.leave_room())
+        else:
+            m.addAction(icon("room", 14), "방 만들기", self.start_host)
+            m.addAction(icon("join", 14), "방 들어가기", self.open_join)
         m.addSeparator()
-        skins = m.addMenu("메모장 모양 (스킨)")
-        for sid in SKIN_ORDER:
-            name = load_skin(sid)["name"] + (" (기본)" if sid == DEFAULT_SKIN else "")
-            a = skins.addAction(name, lambda sid=sid: self.apply_skin(sid))
-            a.setCheckable(True)
-            a.setChecked(sid == self.skin["id"])
-        m.addAction(self._slider_action(m, "크기", SCALE_MIN, SCALE_MAX, self.scale_percent(), self.set_scale))
-        m.addAction(self._slider_action(m, "불투명도", 20, 100, round(self.windowOpacity() * 100),
+        m.addAction(self._skin_chips(m))
+        m.addAction(self._slider_action(m, "expand", "크기", SCALE_MIN, SCALE_MAX, self.scale_percent(),
+                                        self.set_scale))
+        m.addAction(self._slider_action(m, "opacity", "불투명도", 20, 100, round(self.windowOpacity() * 100),
                                         self.set_opacity))
         m.addSeparator()
-        save = m.addAction(icon("save-image", 14), "이미지로 저장 (지금 메모장)", self.save_image)
+        save = m.addAction(icon("save-image", 14), "이미지로 저장", self.save_image)
         save_t = m.addAction(icon("save-image", 14), "투명 배경으로 저장", lambda: self.save_image(True))
         new = m.addAction(icon("new-note", 14), "새 메모장", self.new_page)
         for a in (save, save_t, new):
@@ -1631,7 +1694,15 @@ class Easel(QWidget):
         m.addSeparator()
         m.addAction(icon("collapse", 14), "접기", self.collapse)
         m.addAction(icon("close", 14), "닫기", self.quit)
-        m.exec(self.menu_btn.mapToGlobal(QPoint(0, self.menu_btn.height())))
+        # 메뉴 오른쪽 끝을 … 버튼 오른쪽에 맞추고, 화면 밖으로 나가지 않게
+        size = m.sizeHint()
+        area = (self.screen() or QGuiApplication.primaryScreen()).availableGeometry()
+        pos = self.menu_btn.mapToGlobal(QPoint(self.menu_btn.width() - size.width(), self.menu_btn.height() + 4))
+        pos.setX(min(max(pos.x(), area.left() + 4), area.right() - size.width() - 4))
+        if pos.y() + size.height() > area.bottom():
+            pos.setY(self.menu_btn.mapToGlobal(QPoint(0, 0)).y() - size.height() - 4)
+        self.menu = m
+        m.exec(pos)
 
     def room_display(self):
         """방장이 친구에게 알려줄 방 이름: 방 코드 > 바깥 주소 > 같은 와이파이 주소 순."""

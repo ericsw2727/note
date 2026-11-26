@@ -61,6 +61,38 @@ def icon(name, size=18):
     return QIcon()
 
 
+def _rgba(hex_color, a):
+    c = hex_color.lstrip("#")
+    return f"rgba({int(c[0:2], 16)}, {int(c[2:4], 16)}, {int(c[4:6], 16)}, {a})"
+
+
+def style_menu(menu, ink=INK, paper=PAPER):
+    """메뉴를 둥근 메모지 카드처럼: 모서리를 둥글게(창 바깥은 투명), 글자·강조는 스킨 글자색."""
+    menu.setWindowFlags(menu.windowFlags() | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint)
+    menu.setAttribute(Qt.WA_TranslucentBackground)
+    menu.setStyleSheet(f"""
+QMenu {{ background: {paper}; border: 1px solid {_rgba(ink, 0.22)}; border-radius: 12px; padding: 6px; }}
+QMenu::item {{ color: {ink}; padding: 6px 18px 6px 8px; margin: 1px 0; border-radius: 7px; font-size: 9pt; }}
+QMenu::item:selected {{ background: {_rgba(ink, 0.09)}; }}
+QMenu::item:disabled {{ color: {_rgba(ink, 0.45)}; background: transparent; }}
+QMenu::icon {{ padding-left: 10px; }}
+QMenu::separator {{ height: 1px; background: {_rgba(ink, 0.12)}; margin: 5px 10px; }}
+QMenu::right-arrow {{ width: 8px; height: 8px; }}
+QLabel {{ color: {ink}; font-size: 9pt; background: transparent; }}
+QLabel#muted {{ color: {_rgba(ink, 0.55)}; font-size: 8pt; }}
+QLabel#big {{ font-size: 10.5pt; font-weight: bold; }}
+QSlider::groove:horizontal {{ height: 4px; background: {_rgba(ink, 0.14)}; border-radius: 2px; }}
+QSlider::sub-page:horizontal {{ height: 4px; background: {ink}; border-radius: 2px; }}
+QSlider::handle:horizontal {{ width: 10px; height: 10px; margin: -5px 0; border-radius: 7px;
+                              background: {paper}; border: 2px solid {ink}; }}
+QSlider::handle:horizontal:hover {{ background: {_rgba(ink, 0.15)}; }}
+QToolButton#chip {{ border: 2px solid transparent; border-radius: 9px; background: transparent; padding: 2px; }}
+QToolButton#chip:hover {{ background: {_rgba(ink, 0.07)}; }}
+QToolButton#chip:checked {{ border-color: {ink}; background: {_rgba(ink, 0.06)}; }}
+""")
+    return menu
+
+
 def status_pixmap(name, size=12):
     return svg_pixmap(RES / "ui" / f"status-{name}.svg", size)
 
