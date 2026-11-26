@@ -25,7 +25,7 @@ PORT = 50505
 #   undo/redo {"t","pg","s"}          그 획 숨기기/되살리기
 #   clear {"t","pg"}                  그 메모장 전체 지우기
 #   page  {"t","id"}                  새 메모장
-DRAW_TYPES = ("line", "text", "clear", "undo", "redo", "page")
+DRAW_TYPES = ("line", "text", "stamp", "clear", "undo", "redo", "page")
 IP_RE = re.compile(r"^\d{1,3}(\.\d{1,3}){3}(:\d+)?$")
 
 

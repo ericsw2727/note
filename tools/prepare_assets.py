@@ -240,6 +240,43 @@ def skins():
     print("  skins:", ", ".join(p.name for p in root.iterdir()))
 
 
+STAMP_PX = 192          # 도장 한 개를 저장하는 크기. 종이에는 보통 100~300(캔버스 좌표)로 찍는다.
+STAMP_FIRST = {"wave": "인사", "heart": "하트", "praise": "칭찬",
+               "sleep": "잠자기", "surprise": "놀람", "look-back": "뒤돌아보기"}
+
+
+def stamps():
+    """assets/stamps의 시트를 한 개씩 잘라 res/stamps/<id>.png와 stamps.json(순서·이름)을 만든다.
+    투명한 바깥은 잘라내고 정사각형 가운데에 맞춘다."""
+    src = SRC / "stamps"
+    dst = OUT / "stamps"
+    if dst.exists():
+        shutil.rmtree(dst)
+    dst.mkdir(parents=True)
+    frames = []
+    first = json.loads((src / "momonga" / "atlas.json").read_text(encoding="utf-8"))
+    for key, name in STAMP_FIRST.items():
+        frames.append((f"m-{key}", name, src / "momonga" / first["image"], first["frames"][key]))
+    extra = json.loads((src / "momonga-extra-30" / "atlas.json").read_text(encoding="utf-8"))
+    for f in extra["frames"]:
+        frames.append((f["id"], f["name"], src / "momonga-extra-30" / f["image"], f["rect"]))
+
+    sheets, out = {}, []
+    for sid, name, path, (x, y, w, h) in frames:
+        if path not in sheets:
+            sheets[path] = Image.open(path).convert("RGBA")
+        cell = sheets[path].crop((x, y, x + w, y + h))
+        a = cell.getchannel("A").point(lambda v: 255 if v > 8 else 0)
+        box = a.getbbox() or (0, 0, w, h)
+        cell = cell.crop(box)
+        side = max(cell.size) + 8
+        sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+        sq.paste(cell, ((side - cell.width) // 2, (side - cell.height) // 2))
+        sq.resize((STAMP_PX, STAMP_PX), Image.LANCZOS).save(dst / f"{sid}.png", optimize=True)
+        out.append({"id": sid, "name": name})
+    (dst / "stamps.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
 def main():
     OUT.mkdir(exist_ok=True)
     easel()
@@ -247,6 +284,7 @@ def main():
     layout()
     skins()
     pet()
+    stamps()
     total = sum(f.stat().st_size for f in OUT.rglob("*") if f.is_file())
     print(f"res/ 생성 완료 ({total / 1024:.0f} KB)")
 

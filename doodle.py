@@ -15,13 +15,13 @@ from datetime import datetime
 from PySide6.QtCore import QPoint, QPointF, QRect, QRectF, QSettings, QSize, QStandardPaths, Qt, QTimer
 from PySide6.QtGui import (QColor, QConicalGradient, QFont, QFontMetricsF, QGuiApplication, QImage, QKeySequence,
                            QIcon, QLinearGradient, QPainter, QPainterPath, QPen, QPixmap, QShortcut, QTextCursor)
-from PySide6.QtWidgets import (QApplication, QFileDialog, QFrame,QHBoxLayout, QLabel, QLineEdit, QMenu,
+from PySide6.QtWidgets import (QApplication, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMenu,
                                QPushButton, QSlider, QTextEdit, QToolButton, QVBoxLayout, QWidget, QWidgetAction)
 
 from net import DRAW_TYPES, IP_RE, PORT, RELAY_URL, Net, UPnP, is_private, local_ip
 from pet import Pet
-from resources import (ACCENT, DEFAULT_SKIN, FONT, INK, PAPER, SKIN_ORDER, icon, load_skin, status_pixmap,
-                       style_menu, svg_url, use_skin_icons)
+from resources import (ACCENT, DEFAULT_SKIN, FONT, INK, PAPER, SKIN_ORDER, STAMP_NAMES, STAMPS, icon, load_skin,
+                       stamp_pixmap, status_pixmap, style_menu, svg_url, use_skin_icons)
 
 ERASE = "erase"
 WINDOW = 400                          # 메모장 창 기본 너비(px). 높이는 스킨 그림 비율대로.
@@ -29,6 +29,7 @@ SCALE_MIN, SCALE_MAX = 50, 200        # 크기 조절 범위(%). 50%면 한 변 
 LOGICAL_W, LOGICAL_H = 970, 640      # 통신에 쓰는 캔버스 좌표계 (스킨과 상관없이 같다)
 PEN_RANGE = (2, 40)                   # 펜 굵기 (캔버스 좌표 기준). 지우개는 이것의 2.4배.
 TEXT_RANGE = (20, 100)                # 글자 크기 (캔버스 좌표 기준)
+STAMP_RANGE = (60, 320)               # 도장 한 변 길이 (캔버스 좌표 기준)
 # 크기 조절 손잡이는 스킨마다 네 모서리 근처 (창 너비·높이에 대한 비율). 반대쪽 모서리는 제자리에 있다.
 OPPOSITE = {"tl": "br", "br": "tl", "tr": "bl", "bl": "tr"}
 SKIN = {}                             # 지금 쓰는 스킨 (Easel.apply_skin이 채운다)
@@ -81,6 +82,19 @@ class TextItem:
     def __init__(self, x=0, y=0, txt="", c=None, z=40):
         self.x, self.y, self.txt, self.c, self.z = x, y, txt, c or INK, z
         self.hidden = False
+
+
+class StampItem:
+    """종이 위에 찍은 도장. (x, y)는 가운데, z는 한 변 길이 (캔버스 좌표). 글처럼 지우개에 지워지지 않는다."""
+
+    __slots__ = ("x", "y", "id", "z", "hidden")
+
+    def __init__(self, x=0, y=0, id="", z=140):
+        self.x, self.y, self.id, self.z = x, y, id, z
+        self.hidden = False
+
+    def rect(self):
+        return QRectF(self.x - self.z / 2, self.y - self.z / 2, self.z, self.z)
 
 
 def exit_icon(color, size=32):
@@ -166,6 +180,7 @@ class Canvas(QWidget):
         self.edit_pg = None
         self.edit_sent = False           # 이 상자를 한 번이라도 보냈는지 (새 상자는 글자를 쳐야 생긴다)
         self.drag = None                 # 글 상자 옮기기: [id, 시작점, 원래 x, 원래 y, 움직였는지]
+        self.hover = None                # 도장 도구일 때 마우스 위치 (찍힐 자리를 흐리게 미리 보여준다)
         self.send_timer = QTimer(self, singleShot=True, interval=90, timeout=self._send_text)
         self.setMouseTracking(True)      # 글 도구일 때 상자 위에서 커서 모양을 바꾼다
 
@@ -189,6 +204,12 @@ class Canvas(QWidget):
         p.drawImage(self.rect(), self.layer)
         p.scale(self.width() / LOGICAL_W, self.height() / LOGICAL_H)
         self._draw_texts(p, outlines=self.easel.text_mode)
+        ez = self.easel
+        if self.hover and ez.tool == "stamp" and ez.net:
+            p.setOpacity(0.45)
+            p.drawPixmap(StampItem(*self.hover, ez.stamp_id, ez.stamp_size).rect().toRect(),
+                         stamp_pixmap(ez.stamp_id))
+            p.setOpacity(1.0)
 
     def text_items(self, pg=None):
         return [(s, it) for s, it in self.pages[pg or self.current].items()
@@ -203,8 +224,16 @@ class Canvas(QWidget):
         return QRectF(item.x, item.y, max(br.width(), item.z * 0.6), max(br.height(), fm.height()))
 
     def _draw_texts(self, p, outlines=False):
-        for s, it in self.text_items():
-            if s == self.edit_id:
+        """그림 레이어 위에 도장과 글을 찍은 순서대로 그린다."""
+        for s, it in self.pages[self.current].items():
+            if it.hidden:
+                continue
+            if isinstance(it, StampItem):
+                pm = stamp_pixmap(it.id)
+                if not pm.isNull():
+                    p.drawPixmap(it.rect().toRect(), pm)
+                continue
+            if not isinstance(it, TextItem) or not it.txt or s == self.edit_id:
                 continue                 # 쓰는 중인 상자는 입력칸이 보여준다
             r = self.text_rect(it)
             if outlines:                 # 글 도구일 때는 누를 수 있는 상자를 점선으로 보여준다
@@ -276,15 +305,22 @@ class Canvas(QWidget):
             it.c, it.z = msg.get("c", INK), msg.get("z", 40)
             if pg == self.current:
                 self.update()
+        elif t == "stamp":
+            it = page.get(msg.get("s"))
+            if not isinstance(it, StampItem):
+                it = page[msg.get("s")] = StampItem()
+            it.x, it.y, it.id, it.z = msg.get("x", 0), msg.get("y", 0), str(msg.get("id", "")), msg.get("z", 140)
+            if pg == self.current:
+                self.update()
         elif t in ("undo", "redo"):
             st = page.get(msg.get("s"))
             if st is not None:
                 st.hidden = t == "undo"
                 if pg == self.current:
-                    if isinstance(st, TextItem):
-                        self.update()
-                    else:
+                    if isinstance(st, Stroke):
                         self.rerender()
+                    else:
+                        self.update()
         elif t == "clear":
             if self.edit_pg == pg:
                 self._drop_editor()
@@ -407,6 +443,9 @@ class Canvas(QWidget):
             else:
                 self.begin_edit(pt=pt)
             return
+        if e.button() == Qt.LeftButton and self.easel.net and self.easel.tool == "stamp":
+            self.place_stamp(self.to_logical(e.position()))
+            return
         if e.button() == Qt.LeftButton and self.easel.net:
             self.finish_edit()
             self.sid = self._new_id()
@@ -424,6 +463,10 @@ class Canvas(QWidget):
                 self.drag[4] = True
                 self._move_text(sid, x0 + dx, y0 + dy)   # 글 상자를 끌어서 옮긴다
             return
+        if self.easel.tool == "stamp":
+            self.hover = self.to_logical(e.position())
+            self.update()
+            return
         if self.last is not None and e.buttons() & Qt.LeftButton:
             self._stroke_to(self.to_logical(e.position()))
         if self.easel.text_mode:
@@ -438,6 +481,21 @@ class Canvas(QWidget):
                 self.begin_edit(sid)                     # 누르기만 하면 그 상자를 고친다
             return
         self.last = None
+
+    def leaveEvent(self, e):
+        if self.hover:
+            self.hover = None
+            self.update()
+
+    def place_stamp(self, pt):
+        """지금 고른 도장을 pt(가운데)에 찍는다. 실행 취소는 도장 하나씩."""
+        ez = self.easel
+        self.finish_edit()
+        sid = self._new_id("st")
+        self.undo_stack.setdefault(self.current, []).append(sid)
+        self.redo_stack.pop(self.current, None)
+        self._send({"t": "stamp", "pg": self.current, "s": sid, "x": round(pt[0]), "y": round(pt[1]),
+                    "id": ez.stamp_id, "z": ez.stamp_size})
 
     def _stroke_to(self, pt):
         ez = self.easel
@@ -517,7 +575,7 @@ class Canvas(QWidget):
         img = QImage(LOGICAL_W, LOGICAL_H, QImage.Format_ARGB32)
         img.fill(Qt.transparent if transparent else QColor(skin_color("paper")))
         p = QPainter(img)
-        p.setRenderHints(QPainter.Antialiasing | QPainter.TextAntialiasing)
+        p.setRenderHints(QPainter.Antialiasing | QPainter.TextAntialiasing | QPainter.SmoothPixmapTransform)
         p.drawImage(0, 0, self.layer)
         self._draw_texts(p)
         p.end()
@@ -990,6 +1048,13 @@ class SizeButton(QToolButton):
         p.setRenderHints(QPainter.Antialiasing | QPainter.TextAntialiasing)
         ez = self.easel
         c = QRectF(self.rect()).center()
+        if ez.tool == "stamp":               # 도장 크기만큼 작은 도장
+            lo, hi = STAMP_RANGE
+            side = self.height() * (0.3 + 0.42 * (ez.stamp_size - lo) / (hi - lo))
+            p.setRenderHint(QPainter.SmoothPixmapTransform)
+            p.drawPixmap(QRectF(c.x() - side / 2, c.y() - side / 2, side, side).toRect(),
+                         stamp_pixmap(ez.stamp_id))
+            return
         if ez.tool == "text":
             f = QFont(FONT)
             lo, hi = TEXT_RANGE
@@ -1014,10 +1079,9 @@ class SizePopup(QWidget):
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.easel = easel
-        self.text = easel.tool == "text"
-        lo, hi = TEXT_RANGE if self.text else PEN_RANGE
-        value = easel.text_size if self.text else easel.pen_width
-        self.title = {"text": "글자 크기", "eraser": "지우개 굵기"}.get(easel.tool, "펜 굵기")
+        lo, hi = {"text": TEXT_RANGE, "stamp": STAMP_RANGE}.get(easel.tool, PEN_RANGE)
+        value = {"text": easel.text_size, "stamp": easel.stamp_size}.get(easel.tool, easel.pen_width)
+        self.title = {"text": "글자 크기", "eraser": "지우개 굵기", "stamp": "도장 크기"}.get(easel.tool, "펜 굵기")
         # 막대 하나만 있는 작은 띠. 바뀐 크기는 크기 버튼의 점('가')으로 바로 보인다.
         lay = QHBoxLayout(self)
         lay.setContentsMargins(8, 3, 8, 3)
@@ -1045,6 +1109,91 @@ class SizePopup(QWidget):
 
     def keyPressEvent(self, e):
         if e.key() in (Qt.Key_Escape, Qt.Key_Return, Qt.Key_Enter):
+            self.close()
+        else:
+            super().keyPressEvent(e)
+
+
+class StampButton(QToolButton):
+    """도장 도구. 지금 고른 도장을 보여주고, 누르면 도장 고르는 판이 뜬다."""
+
+    def __init__(self, easel, parent):
+        super().__init__(parent)
+        self.easel = easel
+        self.setObjectName("tool")
+        self.setCheckable(True)
+        self.setCursor(Qt.PointingHandCursor)
+        self.setToolTip("도장 · 골라서 종이를 누르면 찍혀요")
+
+    def paintEvent(self, e):
+        super().paintEvent(e)
+        p = QPainter(self)
+        p.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
+        side = self.height() * 0.78
+        c = QRectF(self.rect()).center()
+        p.drawPixmap(QRectF(c.x() - side / 2, c.y() - side / 2, side, side).toRect(),
+                     stamp_pixmap(self.easel.stamp_id))
+
+
+class StampPopup(QWidget):
+    """도장 고르기 판: 모몽가 도장 36개를 9개씩 4줄로. 하나를 누르면 도장 도구가 되고 판이 닫힌다."""
+
+    COLS = 9
+
+    def __init__(self, easel):
+        super().__init__(easel, Qt.Popup | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.easel = easel
+        ink, paper = skin_color("ink"), skin_color("paper")
+        rgb = QColor(ink)
+        tint = lambda a: f"rgba({rgb.red()}, {rgb.green()}, {rgb.blue()}, {a})"
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        card = QFrame()
+        card.setObjectName("stampCard")
+        outer.addWidget(card)
+        self.setStyleSheet(
+            f"QFrame#stampCard {{ background: {paper}; border: 1px solid {tint(0.22)}; border-radius: 12px; }}"
+            f"QLabel#t {{ color: {ink}; font-weight: bold; font-size: 9pt; background: transparent; }}"
+            f"QLabel#s {{ color: {tint(0.55)}; font-size: 8pt; background: transparent; }}"
+            "QToolButton { border: 2px solid transparent; border-radius: 9px; background: transparent; }"
+            f"QToolButton:hover {{ background: {tint(0.08)}; }}"
+            f"QToolButton:checked {{ border-color: {ink}; background: {tint(0.06)}; }}")
+        box = QVBoxLayout(card)
+        box.setContentsMargins(10, 8, 10, 10)
+        box.setSpacing(6)
+        head = QHBoxLayout()
+        t = QLabel("모몽가 도장"); t.setObjectName("t")
+        s = QLabel("골라서 종이를 누르면 찍혀요"); s.setObjectName("s")
+        head.addWidget(t)
+        head.addStretch(1)
+        head.addWidget(s)
+        box.addLayout(head)
+        grid = QGridLayout()
+        grid.setSpacing(2)
+        self.buttons = {}
+        for i, st in enumerate(STAMPS):
+            b = QToolButton()
+            b.setCheckable(True)
+            b.setChecked(st["id"] == easel.stamp_id)
+            b.setIcon(QIcon(stamp_pixmap(st["id"])))
+            b.setIconSize(QSize(32, 32))
+            b.setFixedSize(38, 38)
+            b.setToolTip(st["name"])
+            b.setCursor(Qt.PointingHandCursor)
+            b.clicked.connect(lambda _=False, sid=st["id"]: self._choose(sid))
+            grid.addWidget(b, i // self.COLS, i % self.COLS)
+            self.buttons[st["id"]] = b
+        box.addLayout(grid)
+        self.adjustSize()
+
+    def _choose(self, sid):
+        self.close()
+        self.easel.choose_stamp(sid)
+
+    def keyPressEvent(self, e):
+        if e.key() == Qt.Key_Escape:
             self.close()
         else:
             super().keyPressEvent(e)
@@ -1080,6 +1229,10 @@ class Easel(QWidget):
         self.tool = "pen"                # pen(연필) / eraser(지우개) / text(글 쓰기)
         self.pen_width = int(self.settings.value("pen/width", 11))
         self.text_size = int(self.settings.value("text/size", 46))
+        self.stamp_size = int(self.settings.value("stamp/size", 150))
+        self.stamp_id = str(self.settings.value("stamp/id", "m-wave"))
+        if self.stamp_id not in STAMP_NAMES and STAMPS:
+            self.stamp_id = STAMPS[0]["id"]
         self.code = None
         self.public = None
         self.lan = None
@@ -1169,6 +1322,9 @@ class Easel(QWidget):
         self.eraser.setCheckable(True)
         self.text_btn = TextToolButton(self)
         self.text_btn.clicked.connect(lambda on: self.set_tool("text" if on else "pen"))
+        self.stamp_btn = StampButton(self, self)
+        self.stamp_btn.clicked.connect(self.open_stamps)
+        self.stamp_btn.setVisible(bool(STAMPS))
         self.size_btn = SizeButton(self, self)
         self.size_btn.clicked.connect(self.open_size)
         self.undo_btn = self._tool_button("undo", "실행 취소 (Ctrl+Z) · 내가 그린 것만", self.canvas.undo)
@@ -1260,22 +1416,23 @@ class Easel(QWidget):
         cy = tray.y() + round(tray.height() * self.skin.get("trayCenter", 0.5))
         sw, bt = 23, 28                                     # 색 간격, 버튼 간격 (기본 크기 기준)
         items = len(self.swatches) + 1
-        need = 12 + items * sw + 6 + 3 * bt + 6 + bt + 6 + 2 * bt + 10 + 26 + 12
+        need = 12 + items * sw + 6 + 4 * bt + 6 + bt + 6 + 2 * bt + 10 + 26 + 12
         f = min(1.0, tray.width() / (need * u))
 
         def m(v):
             return max(1, round(v * u * f))
 
-        x = tray.x() + m(12)
+        k = u * f                                           # 위치는 실수로 쌓고 마지막에만 반올림 (작을 때 겹침 방지)
+        x = tray.x() + 12 * k
         for s in [*self.swatches, self.picker]:
-            s.setGeometry(x, cy - m(11), m(22), m(22))
-            x += m(sw)
-        x += m(6)
-        for i, b in enumerate((self.pencil, self.eraser, self.text_btn, self.size_btn, self.undo_btn,
-                               self.redo_btn)):
-            b.setGeometry(x, cy - m(13), m(26), m(26))
+            s.setGeometry(round(x), cy - m(11), m(22), m(22))
+            x += sw * k
+        x += 6 * k
+        for i, b in enumerate((self.pencil, self.eraser, self.text_btn, self.stamp_btn, self.size_btn,
+                               self.undo_btn, self.redo_btn)):
+            b.setGeometry(round(x), cy - m(13), m(26), m(26))
             b.setIconSize(QSize(m(16), m(16)))
-            x += m(bt) + (m(6) if i in (2, 3) else 0)
+            x += bt * k + (6 * k if i in (3, 4) else 0)
         self.clear_btn.setGeometry(tray.right() - m(12) - m(26), cy - m(13), m(26), m(26))
         self.clear_btn.setIconSize(QSize(m(16), m(16)))
         self.refresh_tools()
@@ -1452,7 +1609,7 @@ class Easel(QWidget):
         for s in self.swatches:
             s.setChecked(s.color == color)
         self.picker.setChecked(color not in self.pens)
-        if self.tool == "eraser":
+        if self.tool in ("eraser", "stamp"):
             self.set_tool("pen")
         self.canvas.restyle_edit(color=color)   # 글을 쓰는 중이면 그 글 색도 바뀐다
 
@@ -1470,9 +1627,12 @@ class Easel(QWidget):
         self.pencil.setChecked(tool == "pen")
         self.eraser.setChecked(tool == "eraser")
         self.text_btn.setChecked(tool == "text")
+        self.stamp_btn.setChecked(tool == "stamp")
         if tool != "text":
             self.canvas.finish_edit()
-        self.canvas.setCursor(Qt.IBeamCursor if tool == "text" else Qt.CrossCursor)
+        if tool != "stamp":
+            self.canvas.hover = None
+        self.canvas.setCursor({"text": Qt.IBeamCursor, "stamp": Qt.PointingHandCursor}.get(tool, Qt.CrossCursor))
         self.canvas.update()
         self.size_btn.update()
         if tool == "text" and was != "text":
@@ -1526,8 +1686,35 @@ class Easel(QWidget):
         self.size_popup = pop
         return pop
 
+    def open_stamps(self):
+        """도장 버튼 위에 도장 고르는 판을 띄운다."""
+        self.stamp_btn.setChecked(self.tool == "stamp")     # 눌러서 바뀐 체크 표시를 원래대로
+        pop = StampPopup(self)
+        area = (self.screen() or QGuiApplication.primaryScreen()).availableGeometry()
+        top = self.stamp_btn.mapToGlobal(QPoint(self.stamp_btn.width() // 2, 0))
+        x = min(max(top.x() - pop.width() // 2, area.left() + 4), area.right() - pop.width() - 4)
+        y = top.y() - pop.height() - 6
+        if y < area.top():
+            y = self.stamp_btn.mapToGlobal(QPoint(0, self.stamp_btn.height())).y() + 6
+        pop.move(x, min(y, area.bottom() - pop.height() - 4))
+        pop.show()
+        self.stamp_popup = pop
+        return pop
+
+    def choose_stamp(self, sid):
+        self.stamp_id = sid
+        self.settings.setValue("stamp/id", sid)
+        self.stamp_btn.update()
+        was = self.tool
+        self.set_tool("stamp")
+        if was != "stamp":
+            self.toast.show_text(f"{STAMP_NAMES.get(sid, '도장')} · 종이를 누르면 찍혀요 (크기는 옆 버튼)", 2500)
+
     def set_size(self, v):
-        if self.tool == "text":
+        if self.tool == "stamp":
+            self.stamp_size = int(v)
+            self.settings.setValue("stamp/size", self.stamp_size)
+        elif self.tool == "text":
             self.text_size = int(v)
             self.settings.setValue("text/size", self.text_size)
             self.canvas.restyle_edit(size=self.text_size)   # 글을 쓰는 중이면 그 글자 크기도
@@ -1951,7 +2138,7 @@ class Easel(QWidget):
             t = msg.get("t")
             if t in DRAW_TYPES:
                 self.canvas.apply(msg)
-                if t in ("line", "text"):
+                if t in ("line", "text", "stamp"):
                     self.pet.drawing_received(wrote=t == "text")
                 elif t == "page":
                     self.toast.show_text(f"친구가 새 메모장을 만들었어요 ({len(self.canvas.order)}장)", 3000)

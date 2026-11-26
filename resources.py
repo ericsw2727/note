@@ -93,6 +93,21 @@ QToolButton#chip:checked {{ border-color: {ink}; background: {_rgba(ink, 0.06)};
     return menu
 
 
+# ───────── 도장 (모몽가) ─────────
+_stamp_file = RES / "stamps" / "stamps.json"
+STAMPS = json.loads(_stamp_file.read_text(encoding="utf-8")) if _stamp_file.exists() else []
+STAMP_NAMES = {s["id"]: s["name"] for s in STAMPS}
+_stamp_cache = {}
+
+
+def stamp_pixmap(sid):
+    """도장 이미지(192px). 없는 id면 빈 QPixmap (친구가 더 새 버전이면 그 도장은 안 보인다)."""
+    if sid not in _stamp_cache:
+        path = RES / "stamps" / f"{sid}.png"
+        _stamp_cache[sid] = QPixmap(str(path)) if sid in STAMP_NAMES and path.exists() else QPixmap()
+    return _stamp_cache[sid]
+
+
 def status_pixmap(name, size=12):
     return svg_pixmap(RES / "ui" / f"status-{name}.svg", size)
 

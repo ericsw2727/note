@@ -19,7 +19,7 @@ CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # 헷갈리는 0/O, 1/I 제외
 MAX_ROOMS = 500
 MAX_HISTORY = 20000      # 방 하나에 들고 있을 선 조각 수
 MAX_MEMBERS = 16
-DRAW_TYPES = ("line", "text", "clear", "undo", "redo", "page")   # 그림·글에 관한 메시지
+DRAW_TYPES = ("line", "text", "stamp", "clear", "undo", "redo", "page")   # 그림·글에 관한 메시지
 
 
 class Room:
