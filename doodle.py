@@ -15,7 +15,7 @@ from datetime import datetime
 from PySide6.QtCore import QPoint, QPointF, QRect, QRectF, QSettings, QSize, QStandardPaths, Qt, QTimer
 from PySide6.QtGui import (QColor, QConicalGradient, QFont, QFontMetricsF, QGuiApplication, QImage, QKeySequence,
                            QIcon, QLinearGradient, QPainter, QPainterPath, QPen, QPixmap, QShortcut, QTextCursor)
-from PySide6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel, QLineEdit, QMenu, QMessageBox,
+from PySide6.QtWidgets import (QApplication, QFileDialog, QFrame,QHBoxLayout, QLabel, QLineEdit, QMenu,
                                QPushButton, QSlider, QTextEdit, QToolButton, QVBoxLayout, QWidget, QWidgetAction)
 
 from net import DRAW_TYPES, IP_RE, PORT, RELAY_URL, Net, UPnP, is_private, local_ip
@@ -1701,24 +1701,68 @@ class Easel(QWidget):
         self._layout()
         self.refresh_tools()
 
+    def open_leave_confirm(self):
+        """'방 나가기' 확인: 윈도우 대화상자 대신 버튼 아래에 뜨는 작은 메모지 모양 띠."""
+        if self.net.is_host and self.count > 1:
+            title, sub, ok = "방을 닫을까요?", "친구들도 연결이 끊기고 그림이 사라져요", "닫기"
+        elif self.net.is_host:
+            title, sub, ok = "방을 닫을까요?", "이 방의 그림은 사라져요", "닫기"
+        else:
+            title, sub, ok = "방에서 나갈까요?", "그림은 방에 남아요", "나가기"
+        pop = QWidget(self, Qt.Popup | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint)
+        pop.setAttribute(Qt.WA_DeleteOnClose)
+        pop.setAttribute(Qt.WA_TranslucentBackground)     # 둥근 모서리 바깥은 투명하게
+        outer = QVBoxLayout(pop)
+        outer.setContentsMargins(0, 0, 0, 0)
+        card = QFrame()                                   # 배경·테두리는 안쪽 카드가 그린다
+        card.setObjectName("leaveCard")
+        outer.addWidget(card)
+        pop.setStyleSheet(
+            f"QFrame#leaveCard {{ background: {PAPER}; border: 1px solid #DCC6AD; border-radius: 10px; }}"
+            f"QLabel#t {{ color: {INK}; font-weight: bold; font-size: 9pt; }}"
+            "QLabel#s { color: #8a7a6e; font-size: 8pt; }"
+            "QPushButton { padding: 4px 12px; border-radius: 7px; font-size: 8.5pt; }"
+            "QPushButton#stay { background: #EFE3D3; color: #5f5045; }"
+            "QPushButton#stay:hover { background: #E6D6C2; }"
+            "QPushButton#go { background: #C7655E; color: #FFF8ED; }"
+            "QPushButton#go:hover { background: #B4554F; }")
+        box = QVBoxLayout(card)
+        box.setContentsMargins(12, 9, 12, 9)
+        box.setSpacing(3)
+        t = QLabel(title); t.setObjectName("t")
+        s = QLabel(sub); s.setObjectName("s")
+        box.addWidget(t)
+        box.addWidget(s)
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 5, 0, 0)
+        row.setSpacing(6)
+        row.addStretch(1)
+        stay = QPushButton("취소"); stay.setObjectName("stay")
+        go = QPushButton(ok); go.setObjectName("go")
+        for b in (stay, go):
+            b.setCursor(Qt.PointingHandCursor)
+            row.addWidget(b)
+        box.addLayout(row)
+        stay.clicked.connect(pop.close)
+        go.clicked.connect(lambda: (pop.close(), self.leave_room(confirm=False)))
+        pop.adjustSize()
+        anchor = self.act_leave if self.act_leave.isVisible() else self.menu_btn
+        area = (self.screen() or QGuiApplication.primaryScreen()).availableGeometry()
+        below = anchor.mapToGlobal(QPoint(0, anchor.height() + 4))
+        pop.move(min(max(below.x(), area.left() + 4), area.right() - pop.width() - 4),
+                 min(below.y(), area.bottom() - pop.height() - 4))
+        pop.show()
+        stay.setFocus()                  # Enter를 눌러도 실수로 나가지 않게
+        self.leave_popup = pop
+        return pop
+
     def leave_room(self, confirm=True):
         """방을 나가 처음 화면(방 만들기 / 방 들어가기)으로 돌아간다."""
         if not self.net:
             return
         if confirm:
-            if self.net.is_host and self.count > 1:
-                text = "방을 닫을까요?\n친구들도 연결이 끊기고, 이 방의 그림은 사라져요."
-            elif self.net.is_host:
-                text = "방을 닫을까요?\n이 방의 그림은 사라져요."
-            else:
-                text = "방에서 나갈까요?\n그림은 방에 남아 있어서 다시 들어오면 볼 수 있어요."
-            box = QMessageBox(QMessageBox.Question, "방 나가기", text, parent=self)
-            box.addButton("나가기", QMessageBox.AcceptRole)
-            stay = box.addButton("취소", QMessageBox.RejectRole)
-            box.setDefaultButton(stay)
-            box.exec()
-            if box.clickedButton() is stay:
-                return
+            self.open_leave_confirm()
+            return
         self.canvas.finish_edit()
         net, was_host = self.net, self.net.is_host
         self.net = None
