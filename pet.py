@@ -56,6 +56,7 @@ class Pet(QWidget):
         self.setFixedSize(self.W, self.H)
         self.setCursor(Qt.PointingHandCursor)
         self.on_expand, self.on_quit = on_expand, on_quit
+        self.on_memo = None                      # 낙서장이 '내 메모 열기'를 넣어 준다
 
         meta = json.loads((RES / "pet" / "pet.json").read_text(encoding="utf-8"))
         self.frames, self.mirrored = {}, {}
@@ -315,6 +316,8 @@ class Pet(QWidget):
     def contextMenuEvent(self, e):
         m = style_menu(QMenu(self))
         m.addAction(icon("expand", 14), "낙서장 펼치기", self.on_expand)
+        if self.on_memo:
+            m.addAction(icon("new-note", 14), "내 메모", self.on_memo)
         m.addAction(icon("play" if self.stopped else "pause", 14),
                     "다시 걷기" if self.stopped else "걷기 멈추기", self._toggle_stop)
         m.addSeparator()

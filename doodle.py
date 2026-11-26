@@ -11,12 +11,14 @@ import threading
 import time
 import uuid
 from datetime import datetime
+from pathlib import Path
 
 from PySide6.QtCore import QPoint, QPointF, QRect, QRectF, QSettings, QSize, QStandardPaths, Qt, QTimer
 from PySide6.QtGui import (QColor, QConicalGradient, QFont, QFontMetricsF, QGuiApplication, QImage, QKeySequence,
                            QIcon, QLinearGradient, QPainter, QPainterPath, QPen, QPixmap, QShortcut, QTextCursor)
 from PySide6.QtWidgets import (QApplication, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMenu,
-                               QPushButton, QSlider, QTextEdit, QToolButton, QVBoxLayout, QWidget, QWidgetAction)
+                               QPlainTextEdit, QPushButton, QSizePolicy, QSlider, QTextEdit, QToolButton, QVBoxLayout, QWidget,
+                               QWidgetAction)
 
 from net import DRAW_TYPES, IP_RE, PORT, RELAY_URL, Net, UPnP, is_private, local_ip
 from pet import Pet
@@ -120,6 +122,252 @@ def exit_icon(color, size=32):
     p.drawPath(arrow)
     p.end()
     return QIcon(pm)
+
+
+def memo_icon(color, size=32):
+    """내 메모 아이콘: 모서리가 접힌 메모지와 글 줄."""
+    pm = QPixmap(size, size)
+    pm.fill(Qt.transparent)
+    p = QPainter(pm)
+    p.setRenderHint(QPainter.Antialiasing)
+    p.scale(size / 24, size / 24)
+    p.setPen(QPen(QColor(color), 2.0, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+    sheet = QPainterPath()
+    sheet.moveTo(5, 4)
+    sheet.lineTo(19, 4)
+    sheet.lineTo(19, 15)
+    sheet.lineTo(14, 20)
+    sheet.lineTo(5, 20)
+    sheet.closeSubpath()
+    p.drawPath(sheet)
+    fold = QPainterPath()
+    fold.moveTo(19, 15)
+    fold.lineTo(14, 15)
+    fold.lineTo(14, 20)
+    p.drawPath(fold)
+    p.drawLine(QPointF(8.5, 9), QPointF(15.5, 9))
+    p.drawLine(QPointF(8.5, 12.5), QPointF(13, 12.5))
+    p.end()
+    return QIcon(pm)
+
+
+class MemoPad(QWidget):
+    """나만 보는 메모 창. 친구에게는 보내지 않고, 쓰는 대로 내 컴퓨터에 저장된다.
+
+    낙서장과 따로 떠 있어서 낙서장을 접어도 그대로 남는다. 위쪽 띠를 잡고 끌고, 오른쪽 아래 모서리로 크기를 바꾼다.
+    """
+
+    MIN = QSize(220, 160)
+
+    def __init__(self, settings):
+        super().__init__(None, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowTitle("내 메모")
+        self.settings = settings
+        # 실행 파일 이름과 상관없이 늘 같은 곳: %LOCALAPPDATA%\Doodle\memo.txt
+        base = QStandardPaths.writableLocation(QStandardPaths.GenericDataLocation) or str(Path.home())
+        self.path = Path(base) / "Doodle" / "memo.txt"
+        self._drag = None
+        self._grip = None
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        self.card = QFrame()
+        self.card.setObjectName("memoCard")
+        outer.addWidget(self.card)
+        box = QVBoxLayout(self.card)
+        box.setContentsMargins(10, 6, 8, 10)
+        box.setSpacing(4)
+        head = QHBoxLayout()
+        head.setSpacing(2)
+        self.title = QLabel("내 메모")
+        self.title.setObjectName("t")
+        self.title.setAttribute(Qt.WA_TransparentForMouseEvents)     # 제목을 잡아도 창이 끌리게
+        self.hint = QLabel("나만 보여요")
+        self.hint.setObjectName("s")
+        self.hint.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.hint.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)     # 긴 안내가 창을 넓히지 않게
+        self._hint_timer = QTimer(self, singleShot=True, interval=2500,
+                                  timeout=lambda: self.hint.setText("나만 보여요"))
+        head.addWidget(self.title)
+        head.addSpacing(6)
+        head.addWidget(self.hint, 1)
+        self.buttons = {}
+        for name, tip, slot in (("paste", "붙여넣기 · 복사해 둔 글을 맨 아래에 붙여요", self.paste_clip),
+                                ("copy", "전부 복사", self.copy_all),
+                                ("clear", "메모 비우기", self.clear_memo),
+                                ("close", "메모 닫기 (내용은 남아요)", self.close)):
+            b = QToolButton()
+            b.setObjectName("m")
+            b.setToolTip(tip)
+            b.setCursor(Qt.PointingHandCursor)
+            b.setFixedSize(24, 24)
+            b.setIconSize(QSize(14, 14))
+            b.clicked.connect(slot)
+            head.addWidget(b)
+            self.buttons[name] = b
+        box.addLayout(head)
+        self.edit = QPlainTextEdit()
+        self.edit.setPlaceholderText("여기에 글을 붙여넣거나 적어 두세요.\nCtrl+V로 붙여넣고, 쓰는 대로 저장돼요.")
+        self.edit.setFrameShape(QFrame.NoFrame)
+        box.addWidget(self.edit, 1)
+        try:
+            self.edit.setPlainText(self.path.read_text(encoding="utf-8"))
+        except OSError:
+            pass
+        self.edit.moveCursor(QTextCursor.End)
+        self._save_timer = QTimer(self, singleShot=True, interval=400, timeout=self.save)
+        self.edit.textChanged.connect(self._save_timer.start)
+        self.setMouseTracking(True)
+        self.card.setMouseTracking(True)
+        self.resize(self.settings.value("memo/size", QSize(300, 340)))
+        pos = self.settings.value("memo/pos")
+        if isinstance(pos, QPoint):
+            self.move(pos)
+        self.restyle(INK, PAPER)
+
+    def restyle(self, ink, paper):
+        """스킨 글자색·종이색에 맞춘다."""
+        rgb = QColor(ink)
+        tint = lambda a: f"rgba({rgb.red()}, {rgb.green()}, {rgb.blue()}, {a})"
+        self.setStyleSheet(
+            f"QFrame#memoCard {{ background: {paper}; border: 1px solid {tint(0.25)}; border-radius: 12px; }}"
+            f"QLabel#t {{ color: {ink}; font-weight: bold; font-size: 9.5pt; background: transparent; }}"
+            f"QLabel#s {{ color: {tint(0.5)}; font-size: 8pt; background: transparent; }}"
+            "QToolButton#m { border: none; border-radius: 6px; background: transparent; }"
+            f"QToolButton#m:hover {{ background: {tint(0.09)}; }}"
+            f"QToolButton#m:pressed {{ background: {tint(0.16)}; }}"
+            f"QPlainTextEdit {{ background: {tint(0.045)}; color: {ink}; border: none; border-radius: 8px;"
+            f" padding: 4px; font-size: 9.5pt; selection-background-color: {tint(0.25)}; selection-color: {ink}; }}"
+            f"QScrollBar:vertical {{ width: 8px; background: transparent; margin: 4px 1px; }}"
+            f"QScrollBar::handle:vertical {{ background: {tint(0.22)}; border-radius: 3px; min-height: 24px; }}"
+            "QScrollBar::add-line, QScrollBar::sub-line { height: 0; }"
+            "QScrollBar::add-page, QScrollBar::sub-page { background: transparent; }")
+        ic = {"paste": icon("new-note", 14), "copy": icon("copy", 14), "clear": icon("clear", 14),
+              "close": icon("close", 14)}
+        for name, b in self.buttons.items():
+            b.setIcon(ic[name])
+        self._ink = QColor(ink)
+        self.update()
+
+    # ── 내용 ──
+    def say(self, text):
+        self.hint.setText(text)
+        self._hint_timer.start()
+
+    def save(self):
+        try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.path.write_text(self.edit.toPlainText(), encoding="utf-8")
+            self.say("저장됨")
+        except OSError:
+            self.say("저장하지 못했어요")
+
+    def paste_clip(self):
+        text = QGuiApplication.clipboard().text()
+        if not text:
+            self.say("복사해 둔 글이 없어요")
+            return
+        cur = self.edit.textCursor()
+        cur.movePosition(QTextCursor.End)
+        if self.edit.toPlainText() and not self.edit.toPlainText().endswith("\n"):
+            cur.insertText("\n")
+        cur.insertText(text.rstrip("\n") + "\n")
+        self.edit.setTextCursor(cur)
+        self.edit.ensureCursorVisible()
+        self.edit.setFocus()
+
+    def copy_all(self):
+        cur = self.edit.textCursor()
+        text = cur.selectedText().replace(" ", "\n") if cur.hasSelection() else self.edit.toPlainText()
+        if text:
+            QGuiApplication.clipboard().setText(text)
+            self.say("선택한 글 복사했어요" if cur.hasSelection() else "전부 복사했어요")
+
+    def clear_memo(self):
+        if not self.edit.toPlainText():
+            return
+        if self.buttons["clear"].property("armed"):
+            self.buttons["clear"].setProperty("armed", False)
+            # 실수로 지웠으면 Ctrl+Z로 되돌릴 수 있게 편집 기록을 남기며 지운다
+            cur = self.edit.textCursor()
+            cur.select(QTextCursor.Document)
+            cur.removeSelectedText()
+            self.say("비웠어요 · Ctrl+Z로 되돌리기")
+        else:
+            self.buttons["clear"].setProperty("armed", True)
+            self.say("한 번 더 누르면 비워요")
+            QTimer.singleShot(3000, lambda: self.buttons["clear"].setProperty("armed", False))
+
+    # ── 창 ──
+    def open(self, near=None):
+        if not self.settings.contains("memo/pos") and near is not None:
+            area = (near.screen() or QGuiApplication.primaryScreen()).availableGeometry()
+            g = near.frameGeometry()
+            x = g.left() - self.width() - 8 if g.left() - self.width() - 8 > area.left() else g.right() + 8
+            self.move(min(max(x, area.left()), area.right() - self.width()),
+                      min(max(g.top(), area.top()), area.bottom() - self.height()))
+        self._keep_on_screen()
+        self.show()
+        self.raise_()
+        self.activateWindow()
+        self.edit.setFocus()
+
+    def _keep_on_screen(self):
+        scr = QGuiApplication.screenAt(self.geometry().center()) or QGuiApplication.primaryScreen()
+        area = scr.availableGeometry()
+        self.move(min(max(self.x(), area.left()), area.right() - self.width()),
+                  min(max(self.y(), area.top()), area.bottom() - self.height()))
+
+    def _in_grip(self, pos):
+        return pos.x() > self.width() - 16 and pos.y() > self.height() - 16
+
+    def paintEvent(self, e):
+        # 오른쪽 아래 크기 조절 표시 (점 세 개)
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        c = QColor(self._ink)
+        c.setAlphaF(0.35)
+        p.setPen(Qt.NoPen)
+        p.setBrush(c)
+        w, h = self.width(), self.height()
+        for dx, dy in ((5, 9), (9, 5), (9, 9)):
+            p.drawEllipse(QPointF(w - dx - 1, h - dy - 1), 1.3, 1.3)
+
+    def mousePressEvent(self, e):
+        if e.button() != Qt.LeftButton:
+            return
+        if self._in_grip(e.position().toPoint()):
+            self._grip = (e.globalPosition().toPoint(), self.size())
+        else:
+            self._drag = e.globalPosition().toPoint() - self.pos()
+
+    def mouseMoveEvent(self, e):
+        gp = e.globalPosition().toPoint()
+        if self._grip:
+            start, size = self._grip
+            d = gp - start
+            self.resize(max(self.MIN.width(), size.width() + d.x()), max(self.MIN.height(), size.height() + d.y()))
+        elif self._drag is not None:
+            self.move(gp - self._drag)
+        else:
+            self.setCursor(Qt.SizeFDiagCursor if self._in_grip(e.position().toPoint()) else Qt.ArrowCursor)
+
+    def mouseReleaseEvent(self, e):
+        if self._drag is not None or self._grip:
+            self._drag = self._grip = None
+            self._keep_on_screen()
+            self.settings.setValue("memo/pos", self.pos())
+            self.settings.setValue("memo/size", self.size())
+
+    def keyPressEvent(self, e):
+        if e.key() == Qt.Key_Escape:
+            self.close()
+        else:
+            super().keyPressEvent(e)
+
+    def closeEvent(self, e):
+        self.save()
+        super().closeEvent(e)
 
 
 def text_font(px):
@@ -1242,6 +1490,9 @@ class Easel(QWidget):
         self.count_seen = False
         self.status_kind = "offline"
         self.pet = Pet(self.expand, self.quit, self.settings)
+        self.memo = MemoPad(self.settings)       # 나만 보는 메모 (… 메뉴나 푸들 메뉴에서 연다)
+        self.pet.on_memo = self.open_memo
+        self.memo.restyle(skin_color("ink"), skin_color("paper"))
         self.side = WINDOW               # 창 너비. 높이는 self.hgt (스킨 비율)
         self.hgt = round(WINDOW * self.aspect)
         self._last_press = (0, None)     # 나무 부분 더블클릭 감지용 (시각, 위치)
@@ -1526,6 +1777,7 @@ class Easel(QWidget):
         for b, name in zip(self.bar_buttons, ("close", "collapse", "menu")):
             b.setIcon(icon(name, 32))
         self.pill.reload_icons()
+        self.memo.restyle(skin_color("ink"), skin_color("paper"))
         self.set_scale(percent, anchor=False)
         if corner is not None:
             self.move(corner.x() - self.side + 1, corner.y() - self.hgt + 1)
@@ -1867,6 +2119,8 @@ class Easel(QWidget):
             m.addAction(icon("room", 14), "방 만들기", self.start_host)
             m.addAction(icon("join", 14), "방 들어가기", self.open_join)
         m.addSeparator()
+        m.addAction(memo_icon(ink, 14), "내 메모 · 나만 보여요", self.open_memo)
+        m.addSeparator()
         m.addAction(self._skin_chips(m))
         m.addAction(self._slider_action(m, "expand", "크기", SCALE_MIN, SCALE_MAX, self.scale_percent(),
                                         self.set_scale))
@@ -1890,6 +2144,9 @@ class Easel(QWidget):
             pos.setY(self.menu_btn.mapToGlobal(QPoint(0, 0)).y() - size.height() - 4)
         self.menu = m
         m.exec(pos)
+
+    def open_memo(self):
+        self.memo.open(self if self.isVisible() else None)
 
     def room_display(self):
         """방장이 친구에게 알려줄 방 이름: 방 코드 > 바깥 주소 > 같은 와이파이 주소 순."""
@@ -2174,6 +2431,7 @@ class Easel(QWidget):
         self.raise_()
 
     def quit(self):
+        self.memo.save()
         if self.net:
             self.net.close()
         self.upnp.close()
